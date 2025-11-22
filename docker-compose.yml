@@ -1,0 +1,163 @@
+version: '3.8'
+
+services:
+  # 1. Milvus - 向量数据库（Open-Notebook的向量存储）
+  milvus:
+    image: milvusdb/milvus:latest
+    container_name: chairman_milvus
+    environment:
+      ETCD_ENDPOINTS: "etcd:2379"
+      COMMON_STORAGETYPE: local
+    ports:
+      - "19530:19530"  # Milvus服务端口
+      - "9091:9091"    # Prometheus指标端口
+    depends_on:
+      - etcd
+      - minio
+    volumes:
+      - ./data/milvus:/var/lib/milvus
+    networks:
+      - chairman_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # 2. Etcd - Milvus的依赖（分布式配置）
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.5
+    container_name: chairman_etcd
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+    volumes:
+      - ./data/etcd:/etcd
+    networks:
+      - chairman_network
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd --quota-backend-bytes=4294967296
+
+  # 3. MinIO - Milvus的对象存储
+  minio:
+    image: minio/minio:latest
+    container_name: chairman_minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./data/minio:/data
+    networks:
+      - chairman_network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 4. PostgreSQL - Open-Notebook的数据库（可选，Open-Notebook也支持SurrealDB）
+  postgres:
+    image: postgres:15
+    container_name: chairman_postgres
+    environment:
+      POSTGRES_DB: open_notebook
+      POSTGRES_USER: notebook_user
+      POSTGRES_PASSWORD: notebook_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    networks:
+      - chairman_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notebook_user -d open_notebook"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 5. Open-Notebook - 董事长思想资料库
+  # 注意：这个镜像需要根据实际的Open-Notebook项目来调整
+  # 如果使用Docker镜像，请使用官方镜像或自己构建
+  # 如果不使用Docker，请在本地部署并通过127.0.0.1:5055访问
+  # 本配置假设使用官方的Open-Notebook Docker镜像
+
+  # 6. Redis - 缓存和会话存储（可选）
+  redis:
+    image: redis:7-alpine
+    container_name: chairman_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
+    networks:
+      - chairman_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+
+  # 7. Chairman Agent API服务 - 主要的后端服务
+  chairman_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chairman_api
+    ports:
+      - "8000:8000"  # FastAPI应用
+    environment:
+      # OpenRouter + DeepSeek
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+
+      # Open-Notebook配置
+      - NOTEBOOK_API_URL=http://localhost:5055
+      - NOTEBOOK_API_KEY=${NOTEBOOK_API_KEY:-}
+      - NOTEBOOK_WS_URL=ws://localhost:8000/rpc
+
+      # Milvus配置
+      - MILVUS_HOST=milvus
+      - MILVUS_PORT=19530
+
+      # Redis配置（缓存）
+      - REDIS_URL=redis://redis:6379/0
+
+      # 存储配置
+      - DATA_DIR=/app/data
+      - LOG_DIR=/app/logs
+    volumes:
+      - ./src:/app/src
+      - ./data/api:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      milvus:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - chairman_network
+    command: python -m uvicorn src.api.gateway:app --host 0.0.0.0 --port 8000 --reload
+
+networks:
+  chairman_network:
+    driver: bridge
+
+volumes:
+  milvus_data:
+  etcd_data:
+  minio_data:
+  postgres_data:
+  redis_data:
