@@ -14,6 +14,8 @@ import uuid
 from src.config import config
 from src.retrieval.knowledge_retriever import get_retriever
 from src.agents.simple_knowledge_agent import get_simple_knowledge_agent
+from src.agents.writing_coach import get_writing_coach
+from src.agents.deep_analyzer import get_deep_analyzer
 
 # 日志配置
 logging.basicConfig(level=logging.INFO)
@@ -338,6 +340,205 @@ async def batch_search(
     except Exception as e:
         logger.error(f"❌ 批量查询失败: {e}")
         raise HTTPException(status_code=500, detail=f"批量查询失败: {str(e)}")
+
+
+# ==================== MVP-2: 写作指导端点 ====================
+
+@app.post("/api/writing/suggest")
+async def writing_suggest(
+    topic: str = Query(..., description="创作主题"),
+    purpose: str = Query(..., description="创作目的"),
+    content: str = Query(..., description="当前内容"),
+    audience: str = Query("内部管理层", description="目标受众")
+):
+    """
+    为创作内容提供高质量的写作建议 - MVP-2
+
+    示例:
+    POST /api/writing/suggest?topic=人才战略&purpose=员工培训&content=...
+    """
+    task_id = str(uuid.uuid4())
+
+    try:
+        logger.info(f"📝 处理写作建议请求 (task_id={task_id}): {topic}")
+
+        coach = get_writing_coach()
+
+        result = coach.suggest_content(
+            topic=topic,
+            purpose=purpose,
+            current_content=content,
+            audience=audience
+        )
+
+        task_store[task_id] = {
+            "id": task_id,
+            "type": "writing_suggestion",
+            "status": "completed",
+            "topic": topic,
+            "result": result,
+            "created_at": datetime.utcnow().isoformat()
+        }
+
+        return {
+            "status": "success",
+            "task_id": task_id,
+            "result": result
+        }
+
+    except Exception as e:
+        logger.error(f"❌ 写作建议失败: {e}")
+        raise HTTPException(status_code=500, detail=f"写作建议失败: {str(e)}")
+
+
+@app.post("/api/writing/evaluate")
+async def writing_evaluate(
+    topic: str = Query(..., description="创作主题"),
+    draft: str = Query(..., description="初稿内容"),
+    revision_round: int = Query(1, description="修订轮次", ge=1, le=10)
+):
+    """
+    评估初稿质量并提供改进建议 - MVP-2
+
+    示例:
+    POST /api/writing/evaluate?topic=人才战略&draft=...
+    """
+    try:
+        logger.info(f"📊 评估初稿质量: {topic} (第{revision_round}轮)")
+
+        coach = get_writing_coach()
+
+        result = coach.evaluate_draft(
+            topic=topic,
+            draft=draft,
+            revision_round=revision_round
+        )
+
+        return {
+            "status": "success",
+            "result": result
+        }
+
+    except Exception as e:
+        logger.error(f"❌ 初稿评估失败: {e}")
+        raise HTTPException(status_code=500, detail=f"初稿评估失败: {str(e)}")
+
+
+# ==================== MVP-3: 深度分析端点 ====================
+
+@app.post("/api/analysis/systemize-thought")
+async def systemize_thought(
+    topic: str = Query(..., description="要体系化的主题"),
+    depth_level: str = Query("high", description="分析深度: low/medium/high")
+):
+    """
+    思想体系化分析 - MVP-3核心功能
+
+    示例:
+    POST /api/analysis/systemize-thought?topic=人才战略&depth_level=high
+    """
+    task_id = str(uuid.uuid4())
+
+    try:
+        logger.info(f"🧠 思想体系化分析 (task_id={task_id}): {topic}")
+
+        analyzer = get_deep_analyzer()
+
+        result = analyzer.systemize_thought(
+            topic=topic,
+            depth_level=depth_level
+        )
+
+        task_store[task_id] = {
+            "id": task_id,
+            "type": "thought_systemization",
+            "status": "completed",
+            "topic": topic,
+            "result": result,
+            "created_at": datetime.utcnow().isoformat()
+        }
+
+        return {
+            "status": "success",
+            "task_id": task_id,
+            "result": result
+        }
+
+    except Exception as e:
+        logger.error(f"❌ 思想体系化失败: {e}")
+        raise HTTPException(status_code=500, detail=f"思想体系化失败: {str(e)}")
+
+
+@app.post("/api/analysis/analyze-meeting")
+async def analyze_meeting(
+    meeting_name: str = Query(..., description="会议名称"),
+    transcript: str = Query(..., description="会议记录"),
+    meeting_date: str = Query(None, description="会议日期")
+):
+    """
+    深度分析会议记录 - MVP-3
+
+    示例:
+    POST /api/analysis/analyze-meeting?meeting_name=董事会&transcript=...
+    """
+    task_id = str(uuid.uuid4())
+
+    try:
+        logger.info(f"📋 分析会议 (task_id={task_id}): {meeting_name}")
+
+        analyzer = get_deep_analyzer()
+
+        result = analyzer.analyze_meeting(
+            meeting_name=meeting_name,
+            transcript=transcript,
+            meeting_date=meeting_date
+        )
+
+        task_store[task_id] = {
+            "id": task_id,
+            "type": "meeting_analysis",
+            "status": "completed",
+            "meeting_name": meeting_name,
+            "result": result,
+            "created_at": datetime.utcnow().isoformat()
+        }
+
+        return {
+            "status": "success",
+            "task_id": task_id,
+            "result": result
+        }
+
+    except Exception as e:
+        logger.error(f"❌ 会议分析失败: {e}")
+        raise HTTPException(status_code=500, detail=f"会议分析失败: {str(e)}")
+
+
+@app.post("/api/analysis/extract-principles")
+async def extract_principles(
+    topic: str = Query(..., description="主题")
+):
+    """
+    提取和系统化管理原则 - MVP-3
+
+    示例:
+    POST /api/analysis/extract-principles?topic=人才战略
+    """
+    try:
+        logger.info(f"📌 提取管理原则: {topic}")
+
+        analyzer = get_deep_analyzer()
+
+        result = analyzer.extract_principles(topic=topic)
+
+        return {
+            "status": "success",
+            "result": result
+        }
+
+    except Exception as e:
+        logger.error(f"❌ 原则提取失败: {e}")
+        raise HTTPException(status_code=500, detail=f"原则提取失败: {str(e)}")
 
 
 # ==================== 信息端点 ====================
