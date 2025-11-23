@@ -8,8 +8,8 @@ import { ConnectionGuard } from "@/components/common/ConnectionGuard";
 import { themeScript } from "@/lib/theme-script";
 
 export const metadata: Metadata = {
-  title: "Open Notebook",
-  description: "Privacy-focused research and knowledge management",
+  title: "董智 - 智能知识管理平台",
+  description: "图灵环流科技 - 专注隐私的研究与知识管理系统",
 };
 
 export default function RootLayout({
@@ -18,9 +18,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <style dangerouslySetInnerHTML={{ __html: `
+          body {
+            font-family: ${inter.style.fontFamily}, 'Noto Sans SC', 'Microsoft YaHei', 'SimHei', sans-serif;
+          }
+        ` }} />
       </head>
       <body>
         <ErrorBoundary>

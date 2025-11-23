@@ -250,9 +250,9 @@ export function SourceDetailContent({
 
   const getSourceType = () => {
     if (!source) return 'unknown'
-    if (source.asset?.url) return 'link'
-    if (source.asset?.file_path) return 'file'
-    return 'text'
+    if (source.asset?.url) return '链接'
+    if (source.asset?.file_path) return '文件'
+    return '文本'
   }
 
   const handleCopyUrl = useCallback(() => {
@@ -296,14 +296,14 @@ export function SourceDetailContent({
   const handleDelete = async () => {
     if (!source) return
 
-    if (confirm('Are you sure you want to delete this source?')) {
+    if (confirm('确定要删除此来源吗？')) {
       try {
         await sourcesApi.delete(source.id)
-        toast.success('Source deleted successfully')
+        toast.success('来源删除成功')
         onClose?.()
       } catch (error) {
         console.error('Failed to delete source:', error)
-        toast.error('Failed to delete source')
+        toast.error('删除来源失败')
       }
     }
   }
@@ -335,8 +335,8 @@ export function SourceDetailContent({
               onSave={handleUpdateTitle}
               className="text-2xl font-bold"
               inputClassName="text-2xl font-bold"
-              placeholder="Source title"
-              emptyText="Untitled Source"
+              placeholder="来源标题"
+              emptyText="无标题来源"
             />
             <p className="mt-1 text-sm text-muted-foreground">
               Source ID: {source.id}
@@ -352,7 +352,7 @@ export function SourceDetailContent({
             {showChatButton && onChatClick && (
               <Button variant="outline" size="sm" onClick={onChatClick}>
                 <MessageSquare className="h-4 w-4 mr-2" />
-                Chat with source
+                与来源对话
               </Button>
             )}
 
@@ -371,10 +371,10 @@ export function SourceDetailContent({
                     >
                       <Download className="mr-2 h-4 w-4" />
                       {fileAvailable === false
-                        ? 'File unavailable'
+                        ? '文件不可用'
                         : isDownloadingFile
-                          ? 'Preparing download…'
-                          : 'Download File'}
+                          ? '准备下载…'
+                          : '下载文件'}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
@@ -384,7 +384,7 @@ export function SourceDetailContent({
                   disabled={isEmbedding || source.embedded}
                 >
                   <Database className="mr-2 h-4 w-4" />
-                  {isEmbedding ? 'Embedding...' : source.embedded ? 'Already Embedded' : 'Embed Content'}
+                  {isEmbedding ? '嵌入中...' : source.embedded ? '已嵌入' : '嵌入内容'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -392,7 +392,7 @@ export function SourceDetailContent({
                   onClick={handleDelete}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Source
+                  删除来源
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -404,11 +404,11 @@ export function SourceDetailContent({
       <div className="flex-1 overflow-y-auto px-2">
         <Tabs defaultValue="content" className="w-full">
           <TabsList className="grid w-full grid-cols-3 sticky top-0 z-10">
-            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="content">内容</TabsTrigger>
             <TabsTrigger value="insights">
-              Insights {insights.length > 0 && `(${insights.length})`}
+              洞察 {insights.length > 0 && `(${insights.length})`}
             </TabsTrigger>
-            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="details">详情</TabsTrigger>
           </TabsList>
 
           <TabsContent value="content" className="mt-6">
@@ -416,7 +416,7 @@ export function SourceDetailContent({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   {isYouTubeUrl && <Youtube className="h-5 w-5" />}
-                  Content
+                  内容
                 </CardTitle>
                 {source.asset?.url && !isYouTubeUrl && (
                   <CardDescription className="flex items-center gap-2">
@@ -471,7 +471,7 @@ export function SourceDetailContent({
                       li: ({ children }) => <li className="mb-1">{children}</li>,
                     }}
                   >
-                    {source.full_text || 'No content available'}
+                    {source.full_text || '无可用内容'}
                   </ReactMarkdown>
                 </div>
               </CardContent>
@@ -484,12 +484,12 @@ export function SourceDetailContent({
                 <CardTitle className="flex items-center justify-between">
                   <span className="flex items-center gap-2">
                     <Lightbulb className="h-5 w-5" />
-                    Insights
+                    洞察
                   </span>
                   <Badge variant="secondary">{insights.length}</Badge>
                 </CardTitle>
                 <CardDescription>
-                  AI-generated insights about this source
+                  关于此来源的AI生成洞察
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -497,7 +497,7 @@ export function SourceDetailContent({
                 <div className="rounded-lg border bg-muted/30 p-4">
                   <h3 className="mb-3 text-sm font-semibold flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    Generate New Insight
+                    生成新洞察
                   </h3>
                   <div className="flex gap-2">
                     <Select
@@ -506,7 +506,7 @@ export function SourceDetailContent({
                       disabled={creatingInsight}
                     >
                       <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Select a transformation..." />
+                        <SelectValue placeholder="选择转换..." />
                       </SelectTrigger>
                       <SelectContent>
                         {transformations.map((trans) => (
@@ -524,12 +524,12 @@ export function SourceDetailContent({
                       {creatingInsight ? (
                         <>
                           <LoadingSpinner className="mr-2 h-3 w-3" />
-                          Creating...
+                          创建中...
                         </>
                       ) : (
                         <>
                           <Plus className="mr-2 h-4 w-4" />
-                          Create
+                          创建
                         </>
                       )}
                     </Button>
@@ -544,8 +544,8 @@ export function SourceDetailContent({
                 ) : insights.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Lightbulb className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm">No insights yet</p>
-                    <p className="text-xs mt-1">Create your first insight using a transformation above</p>
+                    <p className="text-sm">尚无洞察</p>
+                    <p className="text-xs mt-1">使用上面的转换创建您的第一个洞察</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -563,7 +563,7 @@ export function SourceDetailContent({
                         </p>
                         <div className="mt-3 flex justify-end">
                           <Button size="sm" variant="outline" onClick={() => setSelectedInsight(insight)}>
-                            View Insight
+                            查看洞察
                           </Button>
                         </div>
                       </div>
@@ -577,7 +577,7 @@ export function SourceDetailContent({
           <TabsContent value="details" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Details</CardTitle>
+                <CardTitle>详情</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Embedding Alert */}
@@ -585,10 +585,10 @@ export function SourceDetailContent({
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>
-                      Content Not Embedded
+                      内容未嵌入
                     </AlertTitle>
                     <AlertDescription>
-                      This content hasn&apos;t been embedded for vector search. Embedding enables advanced search capabilities and better content discovery.
+                      此内容尚未进行 embedding 以支持向量搜索。Embedding 可以启用高级搜索功能并更好地发现内容。
                       <div className="mt-3">
                         <Button
                           onClick={handleEmbedContent}
@@ -596,7 +596,7 @@ export function SourceDetailContent({
                           size="sm"
                         >
                           <Database className="mr-2 h-4 w-4" />
-                          {isEmbedding ? 'Embedding...' : 'Embed Content'}
+                          {isEmbedding ? '嵌入中...' : '嵌入内容'}
                         </Button>
                       </div>
                     </AlertDescription>
@@ -636,7 +636,7 @@ export function SourceDetailContent({
 
                   {source.asset?.file_path && (
                     <div className="space-y-2">
-                      <h3 className="text-sm font-semibold">Uploaded File</h3>
+                      <h3 className="text-sm font-semibold">上传的文件</h3>
                       <div className="flex flex-wrap items-center gap-2">
                         <code className="rounded bg-muted px-2 py-1 text-sm">
                           {source.asset.file_path}
@@ -649,16 +649,15 @@ export function SourceDetailContent({
                         >
                           <Download className="mr-2 h-4 w-4" />
                           {fileAvailable === false
-                            ? 'Unavailable'
+                            ? '不可用'
                             : isDownloadingFile
-                              ? 'Preparing…'
-                              : 'Download'}
+                              ? '准备中…'
+                              : '下载'}
                         </Button>
                       </div>
                       {fileAvailable === false ? (
                         <p className="text-xs text-muted-foreground">
-                          Original file is no longer available on the server (likely removed after
-                          processing). Upload it again if you need a fresh copy.
+                          原始文件在服务器上不再可用（可能在处理后被删除）。如需要新副本，请重新上传。
                         </p>
                       ) : null}
                     </div>
@@ -666,7 +665,7 @@ export function SourceDetailContent({
 
                   {source.topics && source.topics.length > 0 && (
                     <div>
-                      <h3 className="mb-2 text-sm font-semibold">Topics</h3>
+                      <h3 className="mb-2 text-sm font-semibold">主题</h3>
                       <div className="flex flex-wrap gap-2">
                         {source.topics.map((topic, idx) => (
                           <Badge key={idx} variant="outline">
@@ -681,7 +680,7 @@ export function SourceDetailContent({
                 {/* Metadata */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold">Metadata</h3>
+                    <h3 className="text-sm font-semibold">元数据</h3>
                     <div className="flex items-center gap-2">
                       <Database className="h-3.5 w-3.5 text-muted-foreground" />
                       <Badge variant={source.embedded ? "default" : "secondary"} className="text-xs">
@@ -691,7 +690,7 @@ export function SourceDetailContent({
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <p className="text-xs font-medium text-muted-foreground">Created</p>
+                      <p className="text-xs font-medium text-muted-foreground">创建时间</p>
                       <p className="text-sm">
                         {formatDistanceToNow(new Date(source.created), { addSuffix: true })}
                       </p>
@@ -700,7 +699,7 @@ export function SourceDetailContent({
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-muted-foreground">Updated</p>
+                      <p className="text-xs font-medium text-muted-foreground">更新时间</p>
                       <p className="text-sm">
                         {formatDistanceToNow(new Date(source.updated), { addSuffix: true })}
                       </p>

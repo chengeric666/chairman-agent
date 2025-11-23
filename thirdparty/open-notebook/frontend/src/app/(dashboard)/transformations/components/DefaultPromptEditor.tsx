@@ -33,9 +33,9 @@ export function DefaultPromptEditor() {
               <div className="flex items-center gap-2">
                 <Settings className="h-5 w-5" />
                 <div className="text-left">
-                  <CardTitle className="text-lg">Default Transformation Prompt</CardTitle>
+                  <CardTitle className="text-lg">默认转换提示词</CardTitle>
                   <CardDescription>
-                    This will be added to all your transformation prompts
+                    此内容将添加到您所有的转换提示词中
                   </CardDescription>
                 </div>
               </div>
@@ -52,16 +52,16 @@ export function DefaultPromptEditor() {
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Enter your default transformation instructions..."
+              placeholder="输入您的默认转换指令..."
               className="min-h-[200px] font-mono text-sm"
               disabled={isLoading}
             />
             <div className="flex justify-end">
-              <Button 
+              <Button
                 onClick={handleSave}
                 disabled={isLoading || updateDefaultPrompt.isPending}
               >
-                Save
+                保存
               </Button>
             </div>
           </CardContent>

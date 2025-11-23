@@ -88,7 +88,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # 5. Open-Notebook - Plan 1的知识库核心（官方Docker镜像）
+  # 5. Open-Notebook - Plan 1的知识库核心（使用官方镜像，后续手工中文化）
   open_notebook:
     image: lfnovo/open_notebook:v1-latest-single
     container_name: chairman_open_notebook

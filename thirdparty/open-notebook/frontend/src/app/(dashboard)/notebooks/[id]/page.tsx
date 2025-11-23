@@ -91,8 +91,8 @@ export default function NotebookPage() {
     return (
       <AppShell>
         <div className="p-6">
-          <h1 className="text-2xl font-bold mb-4">Notebook Not Found</h1>
-          <p className="text-muted-foreground">The requested notebook could not be found.</p>
+          <h1 className="text-2xl font-bold mb-4">未找到笔记本</h1>
+          <p className="text-muted-foreground">无法找到所请求的笔记本。</p>
         </div>
       </AppShell>
     )

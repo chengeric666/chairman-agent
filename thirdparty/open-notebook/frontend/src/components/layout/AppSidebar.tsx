@@ -43,31 +43,31 @@ import {
 
 const navigation = [
   {
-    title: 'Collect',
+    title: '收集',
     items: [
-      { name: 'Sources', href: '/sources', icon: FileText },
+      { name: '来源', href: '/sources', icon: FileText },
     ],
   },
   {
-    title: 'Process',
+    title: '处理',
     items: [
-      { name: 'Notebooks', href: '/notebooks', icon: Book },
-      { name: 'Ask and Search', href: '/search', icon: Search },
+      { name: '笔记本', href: '/notebooks', icon: Book },
+      { name: '提问与搜索', href: '/search', icon: Search },
     ],
   },
   {
-    title: 'Create',
+    title: '创作',
     items: [
-      { name: 'Podcasts', href: '/podcasts', icon: Mic },
+      { name: '播客', href: '/podcasts', icon: Mic },
     ],
   },
   {
-    title: 'Manage',
+    title: '管理',
     items: [
-      { name: 'Models', href: '/models', icon: Bot },
-      { name: 'Transformations', href: '/transformations', icon: Shuffle },
-      { name: 'Settings', href: '/settings', icon: Settings },
-      { name: 'Advanced', href: '/advanced', icon: Wrench },
+      { name: '模型', href: '/models', icon: Bot },
+      { name: '转换', href: '/transformations', icon: Shuffle },
+      { name: '设置', href: '/settings', icon: Settings },
+      { name: '高级', href: '/advanced', icon: Wrench },
     ],
   },
 ] as const
@@ -106,19 +106,30 @@ export function AppSidebar() {
       >
         <div
           className={cn(
-            'flex h-16 items-center group',
-            isCollapsed ? 'justify-center px-2' : 'justify-between px-4'
+            'flex items-center border-b border-sidebar-border group relative',
+            isCollapsed ? 'h-16 justify-center px-2' : 'h-24 flex-col justify-center px-4 py-3'
           )}
         >
           {isCollapsed ? (
-            <div className="relative flex items-center justify-center w-full">
-              <Image
-                src="/logo.svg"
-                alt="Open Notebook"
-                width={32}
-                height={32}
-                className="transition-opacity group-hover:opacity-0"
-              />
+            <>
+              <div className="relative w-12 h-12 overflow-hidden transition-opacity group-hover:opacity-0">
+                <Image
+                  src="/turingflow-logo.png"
+                  alt="TuringFlow"
+                  width={200}
+                  height={200}
+                  className="absolute"
+                  style={{
+                    left: '-10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 'auto',
+                    height: '48px',
+                    objectFit: 'cover',
+                    objectPosition: 'left center'
+                  }}
+                />
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
@@ -127,20 +138,27 @@ export function AppSidebar() {
               >
                 <Menu className="h-4 w-4" />
               </Button>
-            </div>
+            </>
           ) : (
             <>
-              <div className="flex items-center gap-2">
-                <Image src="/logo.svg" alt="Open Notebook" width={32} height={32} />
-                <span className="text-base font-medium text-sidebar-foreground">
-                  Open Notebook
+              <div className="flex flex-col items-center gap-2 w-full">
+                <Image
+                  src="/turingflow-logo.png"
+                  alt="TuringFlow"
+                  width={180}
+                  height={40}
+                  className="h-10 w-auto"
+                  style={{ objectFit: 'contain' }}
+                />
+                <span className="text-sm font-medium text-sidebar-foreground/80">
+                  董智智能知识平台
                 </span>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={toggleCollapse}
-                className="text-sidebar-foreground hover:bg-sidebar-accent"
+                className="absolute top-2 right-2 text-sidebar-foreground hover:bg-sidebar-accent"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -170,13 +188,13 @@ export function AppSidebar() {
                         variant="default"
                         size="sm"
                         className="w-full justify-center px-2 bg-primary hover:bg-primary/90 text-primary-foreground border-0"
-                        aria-label="Create"
+                        aria-label="创建"
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                   </TooltipTrigger>
-                  <TooltipContent side="right">Create</TooltipContent>
+                  <TooltipContent side="right">创建</TooltipContent>
                 </Tooltip>
               ) : (
                 <DropdownMenuTrigger asChild>
@@ -187,7 +205,7 @@ export function AppSidebar() {
                     className="w-full justify-start bg-primary hover:bg-primary/90 text-primary-foreground border-0"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Create
+                    创建
                   </Button>
                 </DropdownMenuTrigger>
               )}
@@ -205,7 +223,7 @@ export function AppSidebar() {
                   className="gap-2"
                 >
                   <FileText className="h-4 w-4" />
-                  Source
+                  来源
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={(event) => {
@@ -215,7 +233,7 @@ export function AppSidebar() {
                   className="gap-2"
                 >
                   <Book className="h-4 w-4" />
-                  Notebook
+                  笔记本
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={(event) => {
@@ -225,7 +243,7 @@ export function AppSidebar() {
                   className="gap-2"
                 >
                   <Mic className="h-4 w-4" />
-                  Podcast
+                  播客
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -302,7 +320,7 @@ export function AppSidebar() {
                     <ThemeToggle iconOnly />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="right">Theme</TooltipContent>
+                <TooltipContent side="right">主题</TooltipContent>
               </Tooltip>
             ) : (
               <ThemeToggle />
@@ -320,7 +338,7 @@ export function AppSidebar() {
                   <LogOut className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right">Sign Out</TooltipContent>
+              <TooltipContent side="right">退出登录</TooltipContent>
             </Tooltip>
           ) : (
             <Button
@@ -329,7 +347,7 @@ export function AppSidebar() {
               onClick={logout}
             >
               <LogOut className="h-4 w-4" />
-              Sign Out
+              退出登录
             </Button>
           )}
         </div>

@@ -48,7 +48,7 @@ const createSourceSchema = z.object({
   }
   return true
 }, {
-  message: 'Please provide the required content for the selected source type',
+  message: '请为所选来源类型提供必需的内容',
   path: ['type'],
 }).refine((data) => {
   // Make title mandatory for text sources
@@ -57,7 +57,7 @@ const createSourceSchema = z.object({
   }
   return true
 }, {
-  message: 'Title is required for text sources',
+  message: '文本来源需要标题',
   path: ['title'],
 })
 
@@ -70,9 +70,9 @@ interface AddSourceDialogProps {
 }
 
 const WIZARD_STEPS: readonly WizardStep[] = [
-  { number: 1, title: 'Source & Content', description: 'Choose type and add content' },
-  { number: 2, title: 'Organization', description: 'Select notebooks' },
-  { number: 3, title: 'Processing', description: 'Choose transformations and options' },
+  { number: 1, title: '来源与内容', description: '选择类型并添加内容' },
+  { number: 2, title: '组织', description: '选择笔记本' },
+  { number: 3, title: '处理', description: '选择转换和选项' },
 ]
 
 interface ProcessingState {
@@ -227,7 +227,7 @@ export function AddSourceDialog({
   const onSubmit = async (data: CreateSourceFormData) => {
     try {
       setProcessing(true)
-      setProcessingStatus({ message: 'Submitting source for processing...' })
+      setProcessingStatus({ message: '正在提交来源进行处理...' })
 
       const createRequest: CreateSourceRequest = {
         type: data.type,
@@ -254,8 +254,8 @@ export function AddSourceDialog({
       handleClose()
     } catch (error) {
       console.error('Error creating source:', error)
-      setProcessingStatus({ 
-        message: 'Error creating source. Please try again.',
+      setProcessingStatus({
+        message: '创建来源时出错，请重试。',
       })
       timeoutRef.current = setTimeout(() => {
         setProcessing(false)
@@ -297,17 +297,17 @@ export function AddSourceDialog({
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-[500px]" showCloseButton={true}>
           <DialogHeader>
-            <DialogTitle>Processing Source</DialogTitle>
+            <DialogTitle>正在处理来源</DialogTitle>
             <DialogDescription>
-              Your source is being processed. This may take a few moments.
+              您的来源正在处理中，这可能需要一些时间。
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="flex items-center gap-3">
               <LoaderIcon className="h-5 w-5 animate-spin text-primary" />
               <span className="text-sm text-muted-foreground">
-                {processingStatus?.message || 'Processing...'}
+                {processingStatus?.message || '处理中...'}
               </span>
             </div>
             
@@ -331,9 +331,9 @@ export function AddSourceDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[700px] p-0">
         <DialogHeader className="px-6 pt-6 pb-0">
-          <DialogTitle>Add New Source</DialogTitle>
+          <DialogTitle>添加新来源</DialogTitle>
           <DialogDescription>
-            Add content from links, uploads, or text to your notebooks.
+            从链接、上传或文本向笔记本添加内容。
           </DialogDescription>
         </DialogHeader>
 
@@ -378,12 +378,12 @@ export function AddSourceDialog({
 
           {/* Navigation */}
           <div className="flex justify-between items-center px-6 py-4 border-t border-border bg-muted">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={handleClose}
             >
-              Cancel
+              取消
             </Button>
 
             <div className="flex gap-2">
@@ -393,7 +393,7 @@ export function AddSourceDialog({
                   variant="outline"
                   onClick={handlePrevStep}
                 >
-                  Back
+                  上一步
                 </Button>
               )}
 
@@ -405,7 +405,7 @@ export function AddSourceDialog({
                   onClick={(e) => handleNextStep(e)}
                   disabled={!currentStepValid}
                 >
-                  Next
+                  下一步
                 </Button>
               )}
 
@@ -415,7 +415,7 @@ export function AddSourceDialog({
                 disabled={!currentStepValid || createSource.isPending}
                 className="min-w-[120px]"
               >
-                {createSource.isPending ? 'Creating...' : 'Done'}
+                {createSource.isPending ? '创建中...' : '完成'}
               </Button>
             </div>
           </div>

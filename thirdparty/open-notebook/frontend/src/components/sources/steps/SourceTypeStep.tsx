@@ -24,21 +24,21 @@ interface CreateSourceFormData {
 const SOURCE_TYPES = [
   {
     value: 'link' as const,
-    label: 'Link',
+    label: '链接',
     icon: LinkIcon,
-    description: 'Add a web page or URL',
+    description: '添加网页或URL',
   },
   {
     value: 'upload' as const,
-    label: 'Upload',
+    label: '上传',
     icon: FileIcon,
-    description: 'Upload a document or file',
+    description: '上传文档或文件',
   },
   {
     value: 'text' as const,
-    label: 'Text',
+    label: '文本',
     icon: FileTextIcon,
-    description: 'Add text content directly',
+    description: '直接添加文本内容',
   },
 ]
 
@@ -54,8 +54,8 @@ export function SourceTypeStep({ control, register, errors }: SourceTypeStepProp
   return (
     <div className="space-y-6">
       <FormSection
-        title="Source Type"
-        description="Choose how you want to add your content"
+        title="来源类型"
+        description="选择添加内容的方式"
       >
         <Controller
           control={control}
@@ -100,7 +100,7 @@ export function SourceTypeStep({ control, register, errors }: SourceTypeStepProp
                   
                   {type.value === 'upload' && (
                     <div>
-                      <Label htmlFor="file" className="mb-2 block">File *</Label>
+                      <Label htmlFor="file" className="mb-2 block">文件 *</Label>
                       <Input
                         id="file"
                         type="file"
@@ -108,7 +108,7 @@ export function SourceTypeStep({ control, register, errors }: SourceTypeStepProp
                         accept=".pdf,.doc,.docx,.pptx,.ppt,.xlsx,.xls,.txt,.md,.epub,.mp4,.avi,.mov,.wmv,.mp3,.wav,.m4a,.aac,.jpg,.jpeg,.png,.tiff,.zip,.tar,.gz,.html"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Supported: Documents (PDF, DOC, DOCX, PPT, XLS, EPUB, TXT, MD), Media (MP4, MP3, WAV, M4A), Images (JPG, PNG), Archives (ZIP)
+                        支持：文档 (PDF, DOC, DOCX, PPT, XLS, EPUB, TXT, MD)，媒体 (MP4, MP3, WAV, M4A)，图片 (JPG, PNG)，压缩包 (ZIP)
                       </p>
                       {errors.file && (
                         <p className="text-sm text-destructive mt-1">{errors.file.message}</p>
@@ -118,11 +118,11 @@ export function SourceTypeStep({ control, register, errors }: SourceTypeStepProp
                   
                   {type.value === 'text' && (
                     <div>
-                      <Label htmlFor="content" className="mb-2 block">Text Content *</Label>
+                      <Label htmlFor="content" className="mb-2 block">文本内容 *</Label>
                       <Textarea
                         id="content"
                         {...register('content')}
-                        placeholder="Paste or type your content here..."
+                        placeholder="在此粘贴或输入您的内容..."
                         rows={6}
                       />
                       {errors.content && (
@@ -141,16 +141,16 @@ export function SourceTypeStep({ control, register, errors }: SourceTypeStepProp
       </FormSection>
 
       <FormSection
-        title={selectedType === 'text' ? "Title *" : "Title (optional)"}
+        title={selectedType === 'text' ? "标题 *" : "标题（可选）"}
         description={selectedType === 'text'
-          ? "A title is required for text content"
-          : "If left empty, a title will be generated from the content"
+          ? "文本内容需要标题"
+          : "如果留空，将从内容生成标题"
         }
       >
         <Input
           id="title"
           {...register('title')}
-          placeholder="Give your source a descriptive title"
+          placeholder="为您的来源命名一个描述性标题"
         />
         {errors.title && (
           <p className="text-sm text-destructive mt-1">{errors.title.message}</p>

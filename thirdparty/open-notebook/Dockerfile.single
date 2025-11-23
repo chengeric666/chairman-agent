@@ -1,17 +1,42 @@
 # Build stage
 FROM python:3.12-slim-bookworm AS builder
 
-# Install uv using the official method
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# 配置容器内的代理环境变量（让apt-get使用VPN代理）
+ENV http_proxy=http://host.docker.internal:1082
+ENV https_proxy=http://host.docker.internal:1082
+ENV HTTP_PROXY=http://host.docker.internal:1082
+ENV HTTPS_PROXY=http://host.docker.internal:1082
+
+# Copy local installation scripts (使用VPN访问官方源)
+COPY downloads/node-setup.sh /tmp/node-setup.sh
+COPY downloads/uv-install.sh /tmp/uv-install.sh
+
+# Copy pre-downloaded .deb packages to avoid network issues
+COPY downloads/debs/*.deb /tmp/debs/
 
 # Install system dependencies required for building certain Python packages
 # Add Node.js 20.x LTS for building frontend
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
-    gcc g++ git make \
+# 只安装make和patch（纯工具，无依赖），其他全部让apt-get处理
+RUN apt-get update && apt-get upgrade -y && \
+    dpkg -i /tmp/debs/make_*.deb /tmp/debs/patch_*.deb || true && \
+    apt-get install -y --fix-missing -f \
+    gcc g++ git \
     curl \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && bash /tmp/node-setup.sh \
     && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /tmp/debs
+
+# 构建完成后清除代理配置（避免影响运行时）
+ENV http_proxy=
+ENV https_proxy=
+ENV HTTP_PROXY=
+ENV HTTPS_PROXY=
+
+# Install uv using the local installation script (避免ghcr.io访问问题)
+# UV 0.9.11+安装路径已改为/root/.local/bin
+RUN sh /tmp/uv-install.sh && \
+    mv /root/.local/bin/uv /usr/local/bin/ && \
+    mv /root/.local/bin/uvx /usr/local/bin/
 
 # Set build optimization environment variables
 ENV MAKEFLAGS="-j$(nproc)"
@@ -36,6 +61,8 @@ COPY . /app
 # Install frontend dependencies and build
 WORKDIR /app/frontend
 RUN npm ci
+# 清理Next.js缓存以避免路径解析问题
+RUN rm -rf .next node_modules/.cache
 RUN npm run build
 
 # Return to app root
@@ -44,21 +71,46 @@ WORKDIR /app
 # Runtime stage
 FROM python:3.12-slim-bookworm AS runtime
 
+# 配置容器内的代理环境变量（让apt-get使用VPN代理）
+ENV http_proxy=http://host.docker.internal:1082
+ENV https_proxy=http://host.docker.internal:1082
+ENV HTTP_PROXY=http://host.docker.internal:1082
+ENV HTTPS_PROXY=http://host.docker.internal:1082
+
+# Copy local installation scripts (使用VPN访问官方源)
+COPY downloads/node-setup.sh /tmp/node-setup.sh
+COPY downloads/uv-install.sh /tmp/uv-install.sh
+
+# Copy pre-downloaded .deb packages to avoid network issues
+COPY downloads/debs/*.deb /tmp/debs/
+
 # Install runtime system dependencies including curl for SurrealDB installation
 # Add Node.js 20.x LTS for running frontend
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+# 只安装纯库（libexpat1, libnghttp2-14），supervisor让apt-get处理
+RUN apt-get update && apt-get upgrade -y && \
+    dpkg -i /tmp/debs/libexpat1_*.deb /tmp/debs/libnghttp2-14_*.deb || true && \
+    apt-get install -y --fix-missing -f \
     ffmpeg \
     supervisor \
     curl \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && bash /tmp/node-setup.sh \
     && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /tmp/debs
+
+# 构建完成后清除代理配置（避免影响运行时）
+ENV http_proxy=
+ENV https_proxy=
+ENV HTTP_PROXY=
+ENV HTTPS_PROXY=
 
 # Install SurrealDB
 RUN curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh
 
-# Install uv using the official method
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Install uv using the local installation script (避免ghcr.io访问问题)
+# UV 0.9.11+安装路径已改为/root/.local/bin
+RUN sh /tmp/uv-install.sh && \
+    mv /root/.local/bin/uv /usr/local/bin/ && \
+    mv /root/.local/bin/uvx /usr/local/bin/
 
 # Set the working directory in the container to /app
 WORKDIR /app

@@ -106,12 +106,12 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-3xl w-full max-h-[90vh] overflow-hidden p-0">
         <DialogTitle className="sr-only">
-          {isEditing ? 'Edit note' : 'Create note'}
+          {isEditing ? '编辑笔记' : '创建笔记'}
         </DialogTitle>
         <form onSubmit={handleSubmit(onSubmit)} className="flex h-full flex-col">
           {isEditing && noteLoading ? (
             <div className="flex-1 flex items-center justify-center py-10">
-              <span className="text-sm text-muted-foreground">Loading note…</span>
+              <span className="text-sm text-muted-foreground">加载笔记中…</span>
             </div>
           ) : (
             <>
@@ -119,8 +119,8 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
                 <InlineEdit
                   value={watchTitle ?? ''}
                   onSave={(value) => setValue('title', value || '')}
-                  placeholder="Add a title..."
-                  emptyText="Untitled Note"
+                  placeholder="添加标题..."
+                  emptyText="无标题笔记"
                   className="text-xl font-semibold"
                   inputClassName="text-xl font-semibold"
                 />
@@ -136,7 +136,7 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
                       value={field.value}
                       onChange={field.onChange}
                       height={420}
-                      placeholder="Write your note content here..."
+                      placeholder="在此输入你的笔记内容..."
                       className="rounded-md border"
                     />
                   )}
@@ -150,17 +150,17 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
 
           <div className="border-t px-6 py-4 flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              取消
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isSaving || (isEditing && noteLoading)}
             >
               {isSaving
-                ? isEditing ? 'Saving...' : 'Creating...'
+                ? isEditing ? '保存中...' : '创建中...'
                 : isEditing
-                  ? 'Save Note'
-                  : 'Create Note'}
+                  ? '保存笔记'
+                  : '创建笔记'}
             </Button>
           </div>
         </form>

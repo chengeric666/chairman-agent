@@ -55,54 +55,54 @@ export function EmbeddingModelChangeDialog({
         <AlertDialogHeader>
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="h-5 w-5 text-yellow-500" />
-            <AlertDialogTitle>Embedding Model Change</AlertDialogTitle>
+            <AlertDialogTitle>Embedding模型更改</AlertDialogTitle>
           </div>
           <AlertDialogDescription asChild>
             <div className="space-y-3 text-base text-muted-foreground">
               <p>
-                You are about to change your embedding model{' '}
+                您即将更改您的embedding模型{' '}
                 {oldModelName && newModelName && (
                   <>
-                    from <strong>{oldModelName}</strong> to <strong>{newModelName}</strong>
+                    从 <strong>{oldModelName}</strong> 到 <strong>{newModelName}</strong>
                   </>
                 )}
-                .
+                。
               </p>
 
               <div className="bg-muted p-4 rounded-md space-y-2">
-                <p className="font-semibold text-foreground">⚠️ Important: Rebuild Required</p>
+                <p className="font-semibold text-foreground">⚠️ 重要提示：需要重建</p>
                 <p className="text-sm">
-                  Changing your embedding model requires rebuilding all existing embeddings to maintain consistency.
-                  Without rebuilding, your searches may return incorrect or incomplete results.
+                  更改embedding模型需要重建所有现有的embeddings以保持一致性。
+                  如果不重建，您的搜索可能会返回不正确或不完整的结果。
                 </p>
               </div>
 
               <div className="space-y-2 text-sm">
-                <p className="font-medium text-foreground">What happens next:</p>
+                <p className="font-medium text-foreground">接下来会发生什么：</p>
                 <ul className="list-disc list-inside space-y-1 ml-2">
-                  <li>Your default embedding model will be updated</li>
-                  <li>Existing embeddings will remain unchanged until rebuild</li>
-                  <li>New content will use the new embedding model</li>
-                  <li>You should rebuild embeddings as soon as possible</li>
+                  <li>您的默认embedding模型将被更新</li>
+                  <li>现有的embeddings在重建之前保持不变</li>
+                  <li>新内容将使用新的embedding模型</li>
+                  <li>您应该尽快重建embeddings</li>
                 </ul>
               </div>
 
               <p className="text-sm font-medium text-foreground">
-                Would you like to proceed to the Advanced page to start the rebuild now?
+                您想立即前往高级页面开始重建吗？
               </p>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-col sm:flex-row gap-2">
           <AlertDialogCancel disabled={isConfirming}>
-            Cancel
+            取消
           </AlertDialogCancel>
           <Button
             variant="outline"
             onClick={handleConfirmOnly}
             disabled={isConfirming}
           >
-            Change Model Only
+            仅更改模型
           </Button>
           <AlertDialogAction
             onClick={handleConfirmAndRebuild}
@@ -110,7 +110,7 @@ export function EmbeddingModelChangeDialog({
             className="bg-primary"
           >
             <ExternalLink className="mr-2 h-4 w-4" />
-            Change & Go to Rebuild
+            更改并前往重建
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

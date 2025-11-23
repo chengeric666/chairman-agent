@@ -1,0 +1,226 @@
+version: '3.8'
+
+services:
+  # ============================================================
+  # 数据存储层 - Open-Notebook & Chairman Agent基础设施
+  # ============================================================
+
+  # 1. SurrealDB - Open-Notebook的主要数据库
+  surreal:
+    image: surrealdb/surrealdb:latest
+    container_name: chairman_surreal
+    ports:
+      - "8000:8000"  # SurrealDB服务端口
+    volumes:
+      - ./data/surreal:/mydata
+    networks:
+      - chairman_network
+    # Healthcheck disabled - SurrealDB container lacks curl/nc
+    # healthcheck:
+    #   test: ["CMD-SHELL", "nc -z localhost 8000 || exit 1"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    environment:
+      - SURREALDB_ARGS=--log debug
+    command: start --bind 0.0.0.0:8000 --user root --pass root file:///mydata/surreal.db
+
+  # 2. Milvus - 向量数据库（Optional，用于Chairman的向量搜索）
+  milvus:
+    image: milvusdb/milvus:latest
+    container_name: chairman_milvus
+    command: milvus run standalone
+    environment:
+      ETCD_ENDPOINTS: "etcd:2379"
+      COMMON_STORAGETYPE: local
+    ports:
+      - "19530:19530"  # Milvus服务端口
+      - "9091:9091"    # Prometheus指标端口
+    depends_on:
+      - etcd
+      - minio
+    volumes:
+      - ./data/milvus:/var/lib/milvus
+    networks:
+      - chairman_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # 3. Etcd - Milvus的依赖（分布式配置）
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.5
+    container_name: chairman_etcd
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_SNAPSHOT_COUNT=50000
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+    volumes:
+      - ./data/etcd:/etcd
+    networks:
+      - chairman_network
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd --quota-backend-bytes=4294967296
+
+  # 4. MinIO - Milvus的对象存储
+  minio:
+    image: minio/minio:latest
+    container_name: chairman_minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./data/minio:/data
+    networks:
+      - chairman_network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 5. Open-Notebook - Plan 1的知识库核心（本地构建中文版）
+  open_notebook:
+    build:
+      context: ./thirdparty/open-notebook
+      dockerfile: Dockerfile.single
+    container_name: chairman_open_notebook
+    ports:
+      - "8502:8502"   # Next.js前端UI
+      - "5055:5055"   # FastAPI REST API
+    environment:
+      # SurrealDB配置
+      - SURREAL_URL=ws://surreal:8000/rpc
+      - SURREAL_USER=root
+      - SURREAL_PASSWORD=root
+      - SURREAL_NAMESPACE=open_notebook
+      - SURREAL_DATABASE=production
+
+      # API配置
+      - API_URL=http://localhost:5055
+      - INTERNAL_API_URL=http://open_notebook:5055
+
+      # LLM配置
+      - LLM_PROVIDER=openrouter
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - LLM_MODEL=x-ai/grok-beta
+
+      # Ollama 配置（用于本地 Embedding）
+      - OLLAMA_BASE_URL=http://ollama:11434
+
+      # 默认模型配置
+      - DEFAULT_CHAT_MODEL=x-ai/grok-beta
+      - DEFAULT_TRANSFORMATION_MODEL=x-ai/grok-beta
+      - DEFAULT_TOOLS_MODEL=x-ai/grok-beta
+      - DEFAULT_LARGE_CONTEXT_MODEL=x-ai/grok-beta
+      - DEFAULT_EMBEDDING_MODEL=nomic-embed-text
+      - DEFAULT_TEXT_TO_SPEECH_MODEL=
+    volumes:
+      - ./data/notebook:/app/data
+    depends_on:
+      - surreal
+    networks:
+      - chairman_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5055/api/config"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 6. Redis - 缓存和会话存储
+  redis:
+    image: redis:7-alpine
+    container_name: chairman_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
+    networks:
+      - chairman_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+
+  # 7. Ollama - 本地LLM和Embedding服务
+  ollama:
+    image: ollama/ollama:latest
+    container_name: chairman_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./data/ollama:/root/.ollama
+    networks:
+      - chairman_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 8. Chairman Agent API网关 - 统一的API入口和协调器
+  chairman_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chairman_api
+    ports:
+      - "8001:8001"  # Chairman API网关（区别于Open-Notebook的5055）
+    environment:
+      # Chairman配置
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - PORT=8001
+
+      # LLM配置
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - LLM_MODEL=deepseek/deepseek-chat
+
+      # Open-Notebook配置（API网关的后端）
+      - NOTEBOOK_API_URL=http://open_notebook:5055
+      - NOTEBOOK_API_KEY=${NOTEBOOK_API_KEY:-}
+      - NOTEBOOK_WS_URL=ws://open_notebook:5055/rpc
+
+      # Milvus配置（Chairman向量搜索）
+      - MILVUS_HOST=milvus
+      - MILVUS_PORT=19530
+
+      # Redis配置（缓存）
+      - REDIS_URL=redis://redis:6379/0
+
+      # 存储配置
+      - DATA_DIR=/app/data
+      - LOG_DIR=/app/logs
+    volumes:
+      - ./src:/app/src
+      - ./data/api:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - open_notebook
+      - milvus
+      - redis
+    networks:
+      - chairman_network
+    command: python -m uvicorn src.api.gateway:app --host 0.0.0.0 --port 8001 --reload
+
+networks:
+  chairman_network:
+    driver: bridge
+
+volumes:
+  surreal_data:
+  milvus_data:
+  etcd_data:
+  minio_data:
+  redis_data:
