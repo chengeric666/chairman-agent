@@ -44,7 +44,8 @@ class Config:
     # ==================== 应用配置 ====================
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
-    API_PORT: int = int(os.getenv("API_PORT", "8000"))
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development" if DEBUG else "production")
+    API_PORT: int = int(os.getenv("PORT", os.getenv("API_PORT", "8001")))
     API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
 
     # ==================== Agent配置 ====================

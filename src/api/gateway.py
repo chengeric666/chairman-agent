@@ -16,6 +16,7 @@ from src.retrieval.knowledge_retriever import get_retriever
 from src.agents.simple_knowledge_agent import get_simple_knowledge_agent
 from src.agents.writing_coach import get_writing_coach
 from src.agents.deep_analyzer import get_deep_analyzer
+from src.api.routes import router as api_routes
 
 # 日志配置
 logging.basicConfig(level=logging.INFO)
@@ -36,6 +37,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 注册API路由
+app.include_router(api_routes, prefix="/api")
 
 # ==================== 全局状态 ====================
 
