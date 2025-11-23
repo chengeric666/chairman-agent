@@ -1,7 +1,30 @@
 version: '3.8'
 
 services:
-  # 1. Milvus - 向量数据库（Open-Notebook的向量存储）
+  # ============================================================
+  # 数据存储层 - Open-Notebook & Chairman Agent基础设施
+  # ============================================================
+
+  # 1. SurrealDB - Open-Notebook的主要数据库
+  surreal:
+    image: surrealdb/surrealdb:latest
+    container_name: chairman_surreal
+    ports:
+      - "8000:8000"  # SurrealDB服务端口
+    volumes:
+      - ./data/surreal:/mydata
+    networks:
+      - chairman_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - SURREALDB_ARGS=--log debug
+    command: start --auth --user root --pass root file:///mydata/surreal.db
+
+  # 2. Milvus - 向量数据库（Optional，用于Chairman的向量搜索）
   milvus:
     image: milvusdb/milvus:latest
     container_name: chairman_milvus
@@ -25,7 +48,7 @@ services:
       retries: 3
       start_period: 10s
 
-  # 2. Etcd - Milvus的依赖（分布式配置）
+  # 3. Etcd - Milvus的依赖（分布式配置）
   etcd:
     image: quay.io/coreos/etcd:v3.5.5
     container_name: chairman_etcd
@@ -43,7 +66,7 @@ services:
       - chairman_network
     command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd --quota-backend-bytes=4294967296
 
-  # 3. MinIO - Milvus的对象存储
+  # 4. MinIO - Milvus的对象存储
   minio:
     image: minio/minio:latest
     container_name: chairman_minio
@@ -64,33 +87,43 @@ services:
       timeout: 10s
       retries: 3
 
-  # 4. PostgreSQL - Open-Notebook的数据库（可选，Open-Notebook也支持SurrealDB）
-  postgres:
-    image: postgres:15
-    container_name: chairman_postgres
-    environment:
-      POSTGRES_DB: open_notebook
-      POSTGRES_USER: notebook_user
-      POSTGRES_PASSWORD: notebook_password
+  # 5. Open-Notebook - Plan 1的知识库核心（官方Docker镜像）
+  open_notebook:
+    image: lfnovo/open_notebook:v1-latest-single
+    container_name: chairman_open_notebook
     ports:
-      - "5432:5432"
+      - "8502:8502"   # Next.js前端UI
+      - "5055:5055"   # FastAPI REST API
+    environment:
+      # SurrealDB配置
+      - SURREAL_URL=ws://surreal:8000/rpc
+      - SURREAL_USER=root
+      - SURREAL_PASSWORD=root
+      - SURREAL_NAMESPACE=open_notebook
+      - SURREAL_DATABASE=production
+
+      # API配置
+      - API_URL=http://localhost:5055
+      - INTERNAL_API_URL=http://open_notebook:5055
+
+      # LLM配置
+      - LLM_PROVIDER=openrouter
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - LLM_MODEL=deepseek/deepseek-chat
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - ./data/notebook:/app/data
+    depends_on:
+      surreal:
+        condition: service_healthy
     networks:
       - chairman_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U notebook_user -d open_notebook"]
+      test: ["CMD", "curl", "-f", "http://localhost:5055/api/config"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # 5. Open-Notebook - 董事长思想资料库
-  # 注意：这个镜像需要根据实际的Open-Notebook项目来调整
-  # 如果使用Docker镜像，请使用官方镜像或自己构建
-  # 如果不使用Docker，请在本地部署并通过127.0.0.1:5055访问
-  # 本配置假设使用官方的Open-Notebook Docker镜像
-
-  # 6. Redis - 缓存和会话存储（可选）
+  # 6. Redis - 缓存和会话存储
   redis:
     image: redis:7-alpine
     container_name: chairman_redis
@@ -107,26 +140,30 @@ services:
       retries: 5
     command: redis-server --appendonly yes
 
-  # 7. Chairman Agent API服务 - 主要的后端服务
+  # 7. Chairman Agent API网关 - 统一的API入口和协调器
   chairman_api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: chairman_api
     ports:
-      - "8000:8000"  # FastAPI应用
+      - "8001:8001"  # Chairman API网关（区别于Open-Notebook的5055）
     environment:
-      # OpenRouter + DeepSeek
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      # Chairman配置
       - DEBUG=false
       - LOG_LEVEL=INFO
+      - PORT=8001
 
-      # Open-Notebook配置
-      - NOTEBOOK_API_URL=http://localhost:5055
+      # LLM配置
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - LLM_MODEL=deepseek/deepseek-chat
+
+      # Open-Notebook配置（API网关的后端）
+      - NOTEBOOK_API_URL=http://open_notebook:5055
       - NOTEBOOK_API_KEY=${NOTEBOOK_API_KEY:-}
-      - NOTEBOOK_WS_URL=ws://localhost:8000/rpc
+      - NOTEBOOK_WS_URL=ws://open_notebook:5055/rpc
 
-      # Milvus配置
+      # Milvus配置（Chairman向量搜索）
       - MILVUS_HOST=milvus
       - MILVUS_PORT=19530
 
@@ -141,23 +178,23 @@ services:
       - ./data/api:/app/data
       - ./logs:/app/logs
     depends_on:
+      open_notebook:
+        condition: service_healthy
       milvus:
         condition: service_healthy
       redis:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
     networks:
       - chairman_network
-    command: python -m uvicorn src.api.gateway:app --host 0.0.0.0 --port 8000 --reload
+    command: python -m uvicorn src.api.gateway:app --host 0.0.0.0 --port 8001 --reload
 
 networks:
   chairman_network:
     driver: bridge
 
 volumes:
+  surreal_data:
   milvus_data:
   etcd_data:
   minio_data:
-  postgres_data:
   redis_data:
