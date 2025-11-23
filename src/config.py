@@ -12,7 +12,7 @@ class Config:
     # ==================== API服务配置 ====================
     # OpenRouter + DeepSeek
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
-    OPENROUTER_API_URL: str = "https://openrouter.io/api/v1"
+    OPENROUTER_API_URL: str = "https://openrouter.ai/api/v1"
 
     # 模型配置
     MODEL_REASONING: str = "x-ai/grok-4.1-fast:free"  # 用于推理和分析
