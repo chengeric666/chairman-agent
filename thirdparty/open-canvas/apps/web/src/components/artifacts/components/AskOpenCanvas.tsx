@@ -53,9 +53,9 @@ export const AskOpenCanvas = forwardRef<HTMLDivElement, AskOpenCanvasProps>(
         isArtifactCodeContent(artifactContent)
       ) {
         toast({
-          title: "Selection error",
+          title: "⚠️ 选择错误",
           description:
-            "Failed to get start/end indexes of the selected text. Please try again.",
+            "无法获取所选文本的起始/结束位置。请重新尝试。",
           duration: 5000,
         });
         handleCleanupState();
@@ -66,8 +66,8 @@ export const AskOpenCanvas = forwardRef<HTMLDivElement, AskOpenCanvasProps>(
         await handleSubmitMessage(inputValue);
       } else {
         toast({
-          title: "Selection error",
-          description: "Failed to get selection box. Please try again.",
+          title: "⚠️ 选择错误",
+          description: "无法获取选择框。请重新尝试。",
           duration: 5000,
         });
         handleCleanupState();
@@ -96,16 +96,18 @@ export const AskOpenCanvas = forwardRef<HTMLDivElement, AskOpenCanvasProps>(
           >
             <Input
               className="w-full transition-all duration-300 focus:ring-0 ease-in-out p-1 focus:outline-none border-0 focus-visible:ring-0"
-              placeholder="Ask Open Canvas..."
+              placeholder="请输入您的创意想法..."
               autoFocus
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              title="在此输入您的想法，AI将帮您进行创意创作"
             />
             <Button
               onClick={(e) => handleSubmit(e)}
               type="submit"
               variant="ghost"
               size="icon"
+              title="提交创意指令"
             >
               <CircleArrowUp
                 className="cursor-pointer"
@@ -120,8 +122,9 @@ export const AskOpenCanvas = forwardRef<HTMLDivElement, AskOpenCanvasProps>(
             variant="ghost"
             onClick={() => setIsInputVisible(true)}
             className="transition-all duration-300 ease-in-out w-full"
+            title="点击此处与OpenCanvas互动，获得创意建议"
           >
-            Ask Open Canvas
+            💡 与开智创作互动
           </Button>
         )}
       </div>
