@@ -116,36 +116,27 @@ export default function SearchPage() {
           </div>
 
           <TabsContent value="ask" className="mt-6">
-            <Card>
+            <Card className="flex flex-col h-[calc(100vh-280px)]">
               <CardHeader>
                 <CardTitle className="text-lg">Ask Your Knowledge Base (beta)</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   The LLM will answer your query based on the documents in your knowledge base.
                 </p>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Question Input */}
-                <div className="space-y-2">
-                  <Label htmlFor="ask-question">Question</Label>
-                  <Textarea
-                    id="ask-question"
-                    placeholder="Enter your question..."
-                    value={askQuestion}
-                    onChange={(e) => setAskQuestion(e.target.value)}
-                    onKeyDown={(e) => {
-                      // Submit on Cmd/Ctrl+Enter
-                      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !ask.isStreaming && askQuestion.trim()) {
-                        e.preventDefault()
-                        handleAsk()
-                      }
-                    }}
-                    disabled={ask.isStreaming}
-                    rows={3}
-                    aria-label="Enter your question to ask the knowledge base"
-                  />
-                  <p className="text-xs text-muted-foreground">Press Cmd/Ctrl+Enter to submit</p>
-                </div>
 
+              {/* Results Display Area - Scrollable */}
+              <div className="flex-1 overflow-y-auto px-6">
+                {/* Streaming Response */}
+                <StreamingResponse
+                  isStreaming={ask.isStreaming}
+                  strategy={ask.strategy}
+                  answers={ask.answers}
+                  finalAnswer={ask.finalAnswer}
+                />
+              </div>
+
+              {/* Input Section - Fixed at Bottom */}
+              <CardContent className="space-y-4 border-t mt-4">
                 {/* Models Display */}
                 {!hasEmbeddingModel ? (
                   <div className="flex items-center gap-2 p-3 text-sm text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-950/20 rounded-md">
@@ -182,8 +173,34 @@ export default function SearchPage() {
                         </Badge>
                       </div>
                     </div>
+                  </>
+                )}
 
-                    <div className="flex flex-col sm:flex-row gap-2">
+                {/* Question Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="ask-question">Question</Label>
+                  <Textarea
+                    id="ask-question"
+                    placeholder="Enter your question..."
+                    value={askQuestion}
+                    onChange={(e) => setAskQuestion(e.target.value)}
+                    onKeyDown={(e) => {
+                      // Submit on Cmd/Ctrl+Enter
+                      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !ask.isStreaming && askQuestion.trim()) {
+                        e.preventDefault()
+                        handleAsk()
+                      }
+                    }}
+                    disabled={ask.isStreaming}
+                    rows={3}
+                    aria-label="Enter your question to ask the knowledge base"
+                  />
+                  <p className="text-xs text-muted-foreground">Press Cmd/Ctrl+Enter to submit</p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  {!hasEmbeddingModel ? null : (
+                    <>
                       <Button
                         onClick={handleAsk}
                         disabled={ask.isStreaming || !askQuestion.trim()}
@@ -209,17 +226,9 @@ export default function SearchPage() {
                           Save to Notebooks
                         </Button>
                       )}
-                    </div>
-                  </>
-                )}
-
-                {/* Streaming Response */}
-                <StreamingResponse
-                  isStreaming={ask.isStreaming}
-                  strategy={ask.strategy}
-                  answers={ask.answers}
-                  finalAnswer={ask.finalAnswer}
-                />
+                    </>
+                  )}
+                </div>
 
                 {/* Advanced Models Dialog */}
                 <AdvancedModelsDialog
@@ -247,14 +256,82 @@ export default function SearchPage() {
           </TabsContent>
 
           <TabsContent value="search" className="mt-6">
-            <Card>
+            <Card className="flex flex-col h-[calc(100vh-280px)]">
               <CardHeader>
                 <CardTitle className="text-lg">Search</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Search your knowledge base for specific keywords or concepts
                 </p>
               </CardHeader>
-              <CardContent className="space-y-4">
+
+              {/* Search Results Display Area - Scrollable */}
+              <div className="flex-1 overflow-y-auto px-6">
+                {/* Search Results */}
+                {searchMutation.data && (
+                  <div className="mt-6 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-medium">
+                        {searchMutation.data.total_count} result{searchMutation.data.total_count !== 1 ? 's' : ''} found
+                      </h3>
+                      <Badge variant="outline">{searchMutation.data.search_type} search</Badge>
+                    </div>
+
+                    {searchMutation.data.results.length === 0 ? (
+                      <Card>
+                        <CardContent className="pt-6 text-center text-muted-foreground">
+                          No results found for &ldquo;{searchQuery}&rdquo;
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="space-y-2">
+                        {searchMutation.data.results.map((result, index) => {
+                          // Parse type from parent_id (format: "source:id" or "note:id" or "source_insight:id")
+                          const [type, id] = result.parent_id.split(':')
+                          const modalType = type === 'source_insight' ? 'insight' : type as 'source' | 'note' | 'insight'
+
+                          return (
+                          <Card key={index}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                  <button
+                                    onClick={() => openModal(modalType, id)}
+                                    className="text-primary hover:underline font-medium"
+                                  >
+                                    {result.title}
+                                  </button>
+                                  <Badge variant="secondary" className="ml-2">
+                                    {result.final_score.toFixed(2)}
+                                  </Badge>
+                                </div>
+                              </div>
+
+                              {result.matches && result.matches.length > 0 && (
+                                <Collapsible className="mt-3">
+                                  <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+                                    <ChevronDown className="h-4 w-4" />
+                                    Matches ({result.matches.length})
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent className="mt-2 space-y-1">
+                                    {result.matches.map((match, i) => (
+                                      <div key={i} className="text-sm pl-6 py-1 border-l-2 border-muted">
+                                        {match}
+                                      </div>
+                                    ))}
+                                  </CollapsibleContent>
+                                </Collapsible>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )})}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Input Section - Fixed at Bottom */}
+              <CardContent className="space-y-4 border-t mt-4">
                 {/* Search Input */}
                 <div className="space-y-2">
                   <div className="flex flex-col sm:flex-row gap-2">
@@ -352,69 +429,6 @@ export default function SearchPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* Search Results */}
-                {searchMutation.data && (
-                  <div className="mt-6 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium">
-                        {searchMutation.data.total_count} result{searchMutation.data.total_count !== 1 ? 's' : ''} found
-                      </h3>
-                      <Badge variant="outline">{searchMutation.data.search_type} search</Badge>
-                    </div>
-
-                    {searchMutation.data.results.length === 0 ? (
-                      <Card>
-                        <CardContent className="pt-6 text-center text-muted-foreground">
-                          No results found for &ldquo;{searchQuery}&rdquo;
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
-                        {searchMutation.data.results.map((result, index) => {
-                          // Parse type from parent_id (format: "source:id" or "note:id" or "source_insight:id")
-                          const [type, id] = result.parent_id.split(':')
-                          const modalType = type === 'source_insight' ? 'insight' : type as 'source' | 'note' | 'insight'
-
-                          return (
-                          <Card key={index}>
-                            <CardContent className="pt-4">
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1">
-                                  <button
-                                    onClick={() => openModal(modalType, id)}
-                                    className="text-primary hover:underline font-medium"
-                                  >
-                                    {result.title}
-                                  </button>
-                                  <Badge variant="secondary" className="ml-2">
-                                    {result.final_score.toFixed(2)}
-                                  </Badge>
-                                </div>
-                              </div>
-
-                              {result.matches && result.matches.length > 0 && (
-                                <Collapsible className="mt-3">
-                                  <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                                    <ChevronDown className="h-4 w-4" />
-                                    Matches ({result.matches.length})
-                                  </CollapsibleTrigger>
-                                  <CollapsibleContent className="mt-2 space-y-1">
-                                    {result.matches.map((match, i) => (
-                                      <div key={i} className="text-sm pl-6 py-1 border-l-2 border-muted">
-                                        {match}
-                                      </div>
-                                    ))}
-                                  </CollapsibleContent>
-                                </Collapsible>
-                              )}
-                            </CardContent>
-                          </Card>
-                        )})}
-                      </div>
-                    )}
-                  </div>
-                )}
               </CardContent>
             </Card>
           </TabsContent>
