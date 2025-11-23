@@ -70,3 +70,9 @@ dmypy.json
 
 # 本地测试输出
 test-results/
+
+# 第三方项目源代码（用于本地分析）
+thirdparty/
+open-canvas/
+open_deep_research/
+open-notebook/
