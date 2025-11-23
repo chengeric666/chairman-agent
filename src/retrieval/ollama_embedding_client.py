@@ -31,7 +31,7 @@ class OllamaEmbeddingClient:
         self.base_url = base_url or config.OLLAMA_BASE_URL
         self.model = model or config.OLLAMA_EMBED_MODEL
         self.timeout = timeout or config.OLLAMA_TIMEOUT
-        self.embed_endpoint = f"{self.base_url}/api/embed"
+        self.embed_endpoint = f"{self.base_url}/api/embeddings"
         self.health_endpoint = f"{self.base_url}/api/version"
 
         logger.info(f"✅ Ollama客户端初始化: {self.base_url}, 模型: {self.model}")
