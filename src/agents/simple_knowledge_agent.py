@@ -5,7 +5,7 @@ import logging
 from typing import Optional, Dict, Any
 from langchain import hub
 from langchain_core.tools import tool
-from langchain_openrouter import ChatOpenRouter
+from src.langchain_openrouter import ChatOpenRouter
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain_core.messages import HumanMessage, AIMessage
 

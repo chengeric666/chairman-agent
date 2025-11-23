@@ -3,7 +3,7 @@
 
 import logging
 from typing import Optional, Dict, Any
-from langchain_openrouter import ChatOpenRouter
+from src.langchain_openrouter import ChatOpenRouter
 
 from src.config import config
 from src.retrieval.knowledge_retriever import get_retriever
