@@ -17,7 +17,14 @@ class Config:
     # 模型配置
     MODEL_REASONING: str = "x-ai/grok-4.1-fast:free"  # 用于推理和分析
     MODEL_TOOLCALL: str = "x-ai/grok-4.1-fast:free"   # 用于工具调用
-    MODEL_EMBEDDING: str = "all-MiniLM-L6-v2"      # 向量化模型（本地）
+    MODEL_EMBEDDING: str = "nomic-embed-text"      # Ollama本地embedding模型（768维）
+
+    # ==================== Ollama本地服务配置 ====================
+    OLLAMA_HOST: str = os.getenv("OLLAMA_HOST", "ollama")  # Docker容器内DNS名称
+    OLLAMA_PORT: int = int(os.getenv("OLLAMA_PORT", "11434"))
+    OLLAMA_BASE_URL: str = f"http://{OLLAMA_HOST}:{OLLAMA_PORT}"
+    OLLAMA_TIMEOUT: int = int(os.getenv("OLLAMA_TIMEOUT", "60"))
+    OLLAMA_EMBED_MODEL: str = "nomic-embed-text"  # 768维embedding模型
 
     # ==================== Open-Notebook配置 ====================
     NOTEBOOK_API_URL: str = os.getenv("NOTEBOOK_API_URL", "http://localhost:5055")
@@ -29,7 +36,7 @@ class Config:
     MILVUS_PORT: int = int(os.getenv("MILVUS_PORT", "19530"))
     MILVUS_DB_NAME: str = "chairman_agent"
     MILVUS_COLLECTION_NAME: str = "chairman_thoughts"
-    MILVUS_VECTOR_DIM: int = 384  # all-MiniLM输出维度
+    MILVUS_VECTOR_DIM: int = 768  # nomic-embed-text输出维度
 
     # ==================== 认证配置 (Keycloak) ====================
     KEYCLOAK_URL: str = os.getenv("KEYCLOAK_URL", "http://localhost:8080")

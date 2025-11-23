@@ -7,9 +7,9 @@ from datetime import datetime
 import numpy as np
 from langchain_core.tools import tool
 from pymilvus import Collection, connections
-from sentence_transformers import SentenceTransformer
 
 from src.config import config
+from src.retrieval.ollama_embedding_client import get_ollama_client
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +32,8 @@ class KnowledgeRetriever:
         self.db_name = config.MILVUS_DB_NAME
         self.collection_name = config.MILVUS_COLLECTION_NAME
 
-        # 向量化模型
-        self.embedding_model = SentenceTransformer(config.MODEL_EMBEDDING)
+        # Ollama embedding客户端（HTTP调用，避免本地模型加载）
+        self.embedding_client = get_ollama_client()
 
         # 连接Milvus
         self._connect_milvus()
@@ -104,7 +104,7 @@ class KnowledgeRetriever:
 
     def _embed_text(self, text: str) -> List[float]:
         """
-        使用SentenceTransformer向量化文本
+        使用Ollama远程服务向量化文本
 
         Args:
             text: 要向量化的文本
@@ -113,8 +113,13 @@ class KnowledgeRetriever:
             向量（浮点数列表）
         """
         try:
-            embedding = self.embedding_model.encode(text, convert_to_tensor=False)
-            return embedding.tolist()
+            # 使用同步包装器调用Ollama embedding API
+            embedding = self.embedding_client.embed_single_sync(text)
+
+            if embedding is None:
+                raise ValueError("Ollama embedding返回None，服务可能不可用")
+
+            return embedding
         except Exception as e:
             logger.error(f"❌ 向量化失败: {e}")
             raise

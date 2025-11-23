@@ -109,8 +109,12 @@ class TestDataGenerator:
         return topics
 
     @staticmethod
-    def generate_mock_embeddings(dimension: int = 384, count: int = 5):
-        """生成模拟向量"""
+    def generate_mock_embeddings(dimension: int = 768, count: int = 5):
+        """
+        生成模拟向量
+
+        注：dimension=768对应Ollama的nomic-embed-text模型
+        """
         embeddings = []
         for _ in range(count):
             # 生成随机向量（应该用真实的embedding模型）
