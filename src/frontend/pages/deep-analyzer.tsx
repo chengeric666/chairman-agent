@@ -173,30 +173,31 @@ const DeepAnalyzerPage: React.FC = () => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 space-y-4 sticky top-8">
               <h2 className="text-xl font-semibold text-slate-800">
-                分析配置
+                ⚙️ 分析配置
               </h2>
 
               {/* 分析主题 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  分析主题 *
+                  🎯 分析主题 *
                 </label>
                 <input
                   type="text"
-                  placeholder="例如: 人才战略的演进"
+                  placeholder="请输入要分析的主题，如：人才战略的演进、创新理念体系等"
                   value={request.topic}
                   onChange={(e) =>
                     setRequest({ ...request, topic: e.target.value })
                   }
                   disabled={status === 'processing'}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 placeholder-slate-400"
+                  title={request.topic ? "深度分析该主题的思想体系、核心原则和实践应用" : "请输入分析主题"}
                 />
               </div>
 
               {/* 分析类型 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  分析类型
+                  📊 分析类型
                 </label>
                 <select
                   value={request.analysis_type}
@@ -220,7 +221,7 @@ const DeepAnalyzerPage: React.FC = () => {
               {/* 分析深度 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  分析深度
+                  📈 分析深度
                 </label>
                 <select
                   value={request.depth}
@@ -243,7 +244,7 @@ const DeepAnalyzerPage: React.FC = () => {
               {/* 分析范围 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  分析范围
+                  🎨 分析范围
                 </label>
                 <select
                   value={request.scope}
@@ -266,10 +267,10 @@ const DeepAnalyzerPage: React.FC = () => {
               {/* 背景信息 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  背景信息（可选）
+                  📝 背景信息（可选）
                 </label>
                 <textarea
-                  placeholder="补充背景信息..."
+                  placeholder="请补充相关的背景信息、时代背景、企业情况等，帮助AI进行更深入的分析..."
                   value={request.context}
                   onChange={(e) =>
                     setRequest({
@@ -278,7 +279,8 @@ const DeepAnalyzerPage: React.FC = () => {
                     })
                   }
                   disabled={status === 'processing'}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm h-24 disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm h-24 disabled:bg-gray-100 placeholder-slate-400"
+                  title="补充背景信息可以帮助AI进行更深入和准确的分析"
                 />
               </div>
 
@@ -287,20 +289,21 @@ const DeepAnalyzerPage: React.FC = () => {
                 onClick={handleStartAnalysis}
                 disabled={loading || status === 'processing'}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+                title={request.topic ? "点击开始进行AI深度分析" : "请先输入分析主题"}
               >
                 {loading
-                  ? '启动中...'
+                  ? '🔄 启动中...'
                   : status === 'processing'
-                  ? '分析中...'
-                  : '启动分析'}
+                  ? '⚙️ 分析中...'
+                  : '🚀 启动分析'}
               </button>
 
               {/* 进度条 */}
               {status === 'processing' && (
                 <div className="mt-6">
                   <div className="flex justify-between text-sm text-slate-600 mb-2">
-                    <span>分析进度</span>
-                    <span>{progress}%</span>
+                    <span>📊 分析进度</span>
+                    <span className="font-semibold">{progress}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
@@ -319,11 +322,20 @@ const DeepAnalyzerPage: React.FC = () => {
               <div className="bg-white rounded-lg shadow-md p-12 text-center">
                 <div className="text-6xl mb-4">📊</div>
                 <h3 className="text-xl font-semibold text-slate-800 mb-2">
-                  准备好开始分析了吗？
+                  准备好开始深度分析了吗？
                 </h3>
-                <p className="text-slate-600">
-                  配置分析参数，点击"启动分析"开始深度研究
+                <p className="text-slate-600 mb-4">
+                  在左侧配置分析参数，点击"🚀 启动分析"按钮开始AI驱动的深度研究
                 </p>
+                <div className="text-left bg-slate-50 p-4 rounded-lg text-sm text-slate-600">
+                  <p className="font-semibold text-slate-700 mb-2">💡 分析包括：</p>
+                  <ul className="space-y-1 ml-4">
+                    <li>✓ 思想体系化和原则提取</li>
+                    <li>✓ 深度分析和关键洞察</li>
+                    <li>✓ 实践应用和行动建议</li>
+                    <li>✓ 知识库知识关联和拓展</li>
+                  </ul>
+                </div>
               </div>
             )}
 
@@ -334,15 +346,15 @@ const DeepAnalyzerPage: React.FC = () => {
                     <div className="text-5xl">⚙️</div>
                   </div>
                   <h3 className="text-lg font-semibold text-slate-800">
-                    正在进行深度分析...
+                    🔄 正在进行深度分析...
                   </h3>
                   <p className="text-slate-600">
-                    请耐心等待，分析可能需要 30-120 秒
+                    AI正在进行思想体系化、深度分析和知识关联，请耐心等待（通常需要 30-120 秒）
                   </p>
                   <div className="w-full max-w-xs">
                     <div className="flex justify-between text-sm text-slate-600 mb-2">
-                      <span>整体进度</span>
-                      <span>{progress}%</span>
+                      <span>📊 整体进度</span>
+                      <span className="font-semibold">{progress}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div
@@ -467,12 +479,12 @@ const DeepAnalyzerPage: React.FC = () => {
 
             {status === 'error' && (
               <div className="bg-white rounded-lg shadow-md p-12 text-center">
-                <div className="text-5xl mb-4">❌</div>
+                <div className="text-5xl mb-4">⚠️</div>
                 <h3 className="text-lg font-semibold text-red-600 mb-2">
-                  分析失败
+                  分析过程中出错
                 </h3>
                 <p className="text-slate-600 mb-4">
-                  分析过程中发生错误，请检查输入内容后重试
+                  深度分析未能成功完成。请检查输入内容是否合理，然后重新尝试。如果问题持续，请检查系统状态。
                 </p>
                 <button
                   onClick={() => {
@@ -481,8 +493,9 @@ const DeepAnalyzerPage: React.FC = () => {
                     setResults(null);
                   }}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+                  title="返回初始状态，重新配置分析参数"
                 >
-                  重新开始
+                  🔄 重新开始
                 </button>
               </div>
             )}

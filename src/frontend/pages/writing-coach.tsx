@@ -139,29 +139,29 @@ const WritingCoachPage: React.FC<WritingCoachPageProps> = ({ sessionId }) => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 space-y-4">
               <h2 className="text-xl font-semibold text-slate-800">
-                创作信息
+                ✏️ 创作信息
               </h2>
 
               {/* 主题输入 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  创作主题 *
+                  📌 创作主题 *
                 </label>
                 <input
                   type="text"
-                  placeholder="例如: 人才战略"
+                  placeholder="请输入创作主题，如：人才战略、创新理念等"
                   value={writingRequest.topic}
                   onChange={(e) =>
                     setWritingRequest({ ...writingRequest, topic: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400"
                 />
               </div>
 
               {/* 创作目的 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  创作目的
+                  🎯 创作目的
                 </label>
                 <select
                   value={writingRequest.purpose}
@@ -180,11 +180,11 @@ const WritingCoachPage: React.FC<WritingCoachPageProps> = ({ sessionId }) => {
               {/* 目标读者 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  目标读者
+                  👥 目标读者
                 </label>
                 <input
                   type="text"
-                  placeholder="例如: 高管团队"
+                  placeholder="请指定目标读者，如：高管团队、全体员工等"
                   value={writingRequest.audience}
                   onChange={(e) =>
                     setWritingRequest({
@@ -192,14 +192,14 @@ const WritingCoachPage: React.FC<WritingCoachPageProps> = ({ sessionId }) => {
                       audience: e.target.value
                     })
                   }
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400"
                 />
               </div>
 
               {/* 写作风格 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  写作风格
+                  🎨 写作风格
                 </label>
                 <select
                   value={writingRequest.style}
@@ -218,10 +218,10 @@ const WritingCoachPage: React.FC<WritingCoachPageProps> = ({ sessionId }) => {
               {/* 背景信息 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  背景信息（可选）
+                  📋 背景信息（可选）
                 </label>
                 <textarea
-                  placeholder="补充背景信息..."
+                  placeholder="请补充相关的背景信息、公司情况、时代背景等，帮助AI更好地理解创作需求..."
                   value={writingRequest.context}
                   onChange={(e) =>
                     setWritingRequest({
@@ -229,7 +229,7 @@ const WritingCoachPage: React.FC<WritingCoachPageProps> = ({ sessionId }) => {
                       context: e.target.value
                     })
                   }
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-24"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-24 placeholder-slate-400"
                 />
               </div>
 
@@ -238,8 +238,9 @@ const WritingCoachPage: React.FC<WritingCoachPageProps> = ({ sessionId }) => {
                 onClick={handleGetSuggestions}
                 disabled={loading}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+                title={writingRequest.topic ? "点击获取AI生成的创作建议" : "请先输入创作主题"}
               >
-                {loading ? '处理中...' : '获取创作建议'}
+                {loading ? '🔄 获取建议中...' : '💡 获取创作建议'}
               </button>
             </div>
           </div>
@@ -253,24 +254,26 @@ const WritingCoachPage: React.FC<WritingCoachPageProps> = ({ sessionId }) => {
               </h2>
               <textarea
                 ref={editorRef}
-                placeholder="在此输入或粘贴您的创作内容..."
+                placeholder="请在此输入或粘贴您的创作内容。获得建议后，编辑器中的文本可用于风格分析..."
                 value={draftText}
                 onChange={(e) => setDraftText(e.target.value)}
-                className="w-full h-64 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                className="w-full h-64 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm placeholder-slate-400"
               />
               <div className="mt-4 flex gap-2">
                 <button
                   onClick={handleAnalyzeStyle}
                   disabled={loading || !draftText.trim()}
                   className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+                  title={draftText.trim() ? "分析当前文本的写作风格、语气、清晰度等" : "请先在编辑器中输入文本"}
                 >
-                  分析风格
+                  {loading ? '🔄 分析中...' : '🎯 分析风格'}
                 </button>
                 <button
                   onClick={handleClear}
                   className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+                  title="清空编辑器中的所有内容"
                 >
-                  清空
+                  🗑️ 清空内容
                 </button>
               </div>
             </div>
@@ -349,9 +352,10 @@ const WritingCoachPage: React.FC<WritingCoachPageProps> = ({ sessionId }) => {
                         </div>
                       ))
                     ) : (
-                      <p className="text-slate-500 text-center py-8">
-                        点击"获取创作建议"查看AI生成的建议
-                      </p>
+                      <div className="text-center py-12">
+                        <p className="text-slate-500 mb-2">👈 请在左侧填写创作信息</p>
+                        <p className="text-slate-400 text-sm">点击"💡 获取创作建议"按钮查看AI生成的建议</p>
+                      </div>
                     )}
                   </div>
                 )}
@@ -363,13 +367,13 @@ const WritingCoachPage: React.FC<WritingCoachPageProps> = ({ sessionId }) => {
                         {/* 风格评分 */}
                         <div className="grid grid-cols-2 gap-4">
                           <div className="p-4 bg-slate-50 rounded-lg">
-                            <p className="text-sm text-slate-600 mb-1">语气</p>
+                            <p className="text-sm text-slate-600 mb-1">📢 语气风格</p>
                             <p className="text-lg font-semibold text-slate-800">
                               {styleAnalysis.tone}
                             </p>
                           </div>
                           <div className="p-4 bg-slate-50 rounded-lg">
-                            <p className="text-sm text-slate-600 mb-1">清晰度</p>
+                            <p className="text-sm text-slate-600 mb-1">✨ 清晰度评分</p>
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div
                                 className="bg-blue-600 h-2 rounded-full"
@@ -378,7 +382,7 @@ const WritingCoachPage: React.FC<WritingCoachPageProps> = ({ sessionId }) => {
                                 }}
                               />
                             </div>
-                            <p className="text-sm mt-1">
+                            <p className="text-sm mt-1 font-semibold">
                               {(styleAnalysis.clarity * 100).toFixed(0)}%
                             </p>
                           </div>
@@ -387,7 +391,7 @@ const WritingCoachPage: React.FC<WritingCoachPageProps> = ({ sessionId }) => {
                         {/* 改进建议 */}
                         <div>
                           <h3 className="font-medium text-slate-800 mb-3">
-                            改进建议
+                            💭 优化建议
                           </h3>
                           <div className="space-y-3">
                             {[
@@ -418,18 +422,32 @@ const WritingCoachPage: React.FC<WritingCoachPageProps> = ({ sessionId }) => {
                         </div>
                       </>
                     ) : (
-                      <p className="text-slate-500 text-center py-8">
-                        输入文本并点击"分析风格"进行分析
-                      </p>
+                      <div className="text-center py-12">
+                        <p className="text-slate-500 mb-2">📝 请先输入创作内容</p>
+                        <p className="text-slate-400 text-sm">然后点击"🎯 分析风格"按钮来分析文本的风格、语气、清晰度等属性</p>
+                      </div>
                     )}
                   </div>
                 )}
 
                 {activeTab === 'knowledge' && (
                   <div className="space-y-4">
-                    <p className="text-slate-500 text-center py-8">
-                      相关知识源将在此显示
-                    </p>
+                    <div className="text-center py-8">
+                      <p className="text-slate-500 mb-4">📚 相关知识源</p>
+                      <p className="text-slate-400 text-sm mb-6">获取创作建议后，将自动显示相关知识库中的参考资料</p>
+                      <div className="space-y-3">
+                        <div className="p-4 bg-slate-50 rounded-lg text-left border border-slate-200">
+                          <p className="font-medium text-slate-700 mb-2">📖 知识库搜索</p>
+                          <p className="text-sm text-slate-600">当您点击"获取创作建议"时，系统将自动搜索董智知识库中的相关资料，并在此展示：</p>
+                          <ul className="text-sm text-slate-600 mt-2 space-y-1 ml-4">
+                            <li>✓ 相关文章和思想观点</li>
+                            <li>✓ 企业管理和战略资讯</li>
+                            <li>✓ 创新理念和实践案例</li>
+                            <li>✓ 人才培养和组织建设</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
