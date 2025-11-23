@@ -15,8 +15,8 @@ class Config:
     OPENROUTER_API_URL: str = "https://openrouter.io/api/v1"
 
     # 模型配置
-    MODEL_REASONING: str = "deepseek/deepseek-r1"  # 用于推理和分析
-    MODEL_TOOLCALL: str = "deepseek/deepseek-v3"   # 用于工具调用
+    MODEL_REASONING: str = "x-ai/grok-4.1-fast:free"  # 用于推理和分析
+    MODEL_TOOLCALL: str = "x-ai/grok-4.1-fast:free"   # 用于工具调用
     MODEL_EMBEDDING: str = "all-MiniLM-L6-v2"      # 向量化模型（本地）
 
     # ==================== Open-Notebook配置 ====================
