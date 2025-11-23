@@ -72,7 +72,7 @@ dmypy.json
 test-results/
 
 # 第三方项目源代码（用于本地分析）
-thirdparty/
-open-canvas/
-open_deep_research/
-open-notebook/
+# thirdparty/ - 现在由Chairman Agent管理
+# open-canvas/
+# open_deep_research/
+# open-notebook/
