@@ -3,11 +3,8 @@
 
 import logging
 from typing import Optional, Dict, Any
-from langchain import hub
-from langchain_core.tools import tool
 from src.langchain_openrouter import ChatOpenRouter
-from langchain.agents import AgentExecutor, create_react_agent
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.config import config
 from src.retrieval.knowledge_retriever import get_retriever
@@ -39,39 +36,30 @@ class SimpleKnowledgeAgent:
             timeout=config.LLM_TIMEOUT
         )
 
-        # 定义知识库查询工具
-        self.tools = [self._create_knowledge_retrieval_tool()]
-
         logger.info("✅ SimpleKnowledgeAgent初始化完成")
 
-    def _create_knowledge_retrieval_tool(self):
-        """创建知识库检索工具"""
+    def query_knowledge_base(self, topic: str, top_k: int = 10) -> str:
+        """
+        查询知识库
 
-        @tool
-        def query_chairman_knowledge(topic: str, top_k: int = 10) -> str:
-            """
-            查询董事长的知识库
+        Args:
+            topic: 查询的主题
+            top_k: 返回的最多结果数
 
-            Args:
-                topic: 查询的主题
-                top_k: 返回的最多结果数
+        Returns:
+            相关的知识库内容
+        """
+        logger.info(f"📚 查询知识库: {topic} (top_k={top_k})")
 
-            Returns:
-                相关的知识库内容
-            """
-            logger.info(f"📚 查询知识库: {topic} (top_k={top_k})")
-
-            try:
-                result = self.retriever.retrieve_knowledge(
-                    query=topic,
-                    top_k=top_k
-                )
-                return result
-            except Exception as e:
-                logger.error(f"❌ 知识库查询失败: {e}")
-                return f"知识库查询失败: {str(e)}"
-
-        return query_chairman_knowledge
+        try:
+            result = self.retriever.retrieve_knowledge(
+                query=topic,
+                top_k=top_k
+            )
+            return result
+        except Exception as e:
+            logger.error(f"❌ 知识库查询失败: {e}")
+            return f"知识库查询失败: {str(e)}"
 
     def _create_system_prompt(self) -> str:
         """创建系统Prompt"""
@@ -95,53 +83,47 @@ class SimpleKnowledgeAgent:
 3. 组织清晰的回答
 4. 如果没有找到相关资料，诚实地说明"""
 
-    def query(self, topic: str) -> str:
+    def query(self, topic: str) -> Dict[str, Any]:
         """
-        执行Agent查询
+        执行Agent查询 - 简化实现版本
 
         Args:
             topic: 查询的主题
 
         Returns:
-            Agent生成的回答
+            查询结果
         """
         logger.info(f"🤖 执行Agent查询: {topic}")
 
         try:
-            # 创建Agent
-            prompt = hub.pull("hwchase17/react")  # 使用ReAct Prompt
+            # 第一步：查询知识库
+            knowledge = self.query_knowledge_base(topic, top_k=10)
 
-            # 创建Agent执行器
-            agent = create_react_agent(
-                self.llm,
-                self.tools,
-                prompt=prompt
-            )
+            # 第二步：用LLM基于知识库生成高质量回答
+            system_prompt = self._create_system_prompt()
 
-            executor = AgentExecutor(
-                agent=agent,
-                tools=self.tools,
-                verbose=config.DEBUG
-            )
+            messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=f"基于以下董事长思想资料，请回答我的问题：\n\n{knowledge}\n\n问题：{topic}")
+            ]
 
-            # 执行查询
-            result = executor.invoke({"input": topic})
+            # 调用LLM生成回答
+            response = self.llm.invoke(messages)
+            answer = response.content if hasattr(response, 'content') else str(response)
 
-            output = result.get("output", "")
-
-            logger.info(f"✅ Agent查询完成，生成了 {len(output)} 字的回答")
+            logger.info(f"✅ Agent查询完成，生成了 {len(answer)} 字的回答")
 
             return {
                 "status": "success",
                 "topic": topic,
-                "answer": output,
-                "reasoning": result.get("intermediate_steps", [])
+                "answer": answer,
+                "knowledge_sources": knowledge[:500] + "..." if len(knowledge) > 500 else knowledge
             }
 
         except Exception as e:
             logger.error(f"❌ Agent执行失败: {e}")
 
-            # 降级方案：直接使用知识库查询
+            # 降级方案：直接使用知识库查询结果
             logger.info("🔄 降级为直接知识库查询")
 
             try:
