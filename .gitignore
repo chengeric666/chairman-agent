@@ -12,6 +12,8 @@ eggs/
 .eggs/
 lib/
 lib64/
+# 允许 TypeScript 项目的 lib/ 目录（OpenCanvas）
+!thirdparty/open-canvas/**/lib/
 parts/
 sdist/
 var/
