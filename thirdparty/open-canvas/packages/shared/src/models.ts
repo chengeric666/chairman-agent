@@ -462,7 +462,7 @@ const GROQ_MODELS: ModelConfigurationParams[] = [
 ];
 
 /**
- * OpenRouter models - 聚合多个LLM提供商的服务
+ * OpenRouter models - 只保留 Grok 模型
  * OpenRouter使用OpenAI兼容的API格式
  */
 const OPENROUTER_MODELS: ModelConfigurationParams[] = [
@@ -486,66 +486,22 @@ const OPENROUTER_MODELS: ModelConfigurationParams[] = [
     },
     isNew: true,
   },
-  {
-    name: "openrouter/deepseek/deepseek-chat",
-    label: "DeepSeek Chat (OpenRouter)",
-    config: {
-      provider: "openrouter",
-      temperatureRange: {
-        min: 0,
-        max: 1,
-        default: 0.5,
-        current: 0.5,
-      },
-      maxTokens: {
-        min: 1,
-        max: 64_000,
-        default: 4_096,
-        current: 4_096,
-      },
-    },
-    isNew: false,
-  },
-  {
-    name: "openrouter/anthropic/claude-3.5-sonnet",
-    label: "Claude 3.5 Sonnet (OpenRouter)",
-    config: {
-      provider: "openrouter",
-      temperatureRange: {
-        min: 0,
-        max: 1,
-        default: 0.5,
-        current: 0.5,
-      },
-      maxTokens: {
-        min: 1,
-        max: 8_192,
-        default: 4_096,
-        current: 4_096,
-      },
-    },
-    isNew: false,
-  },
-  {
-    name: "openrouter/openai/gpt-4o-mini",
-    label: "GPT-4o Mini (OpenRouter)",
-    config: {
-      provider: "openrouter",
-      temperatureRange: {
-        min: 0,
-        max: 1,
-        default: 0.5,
-        current: 0.5,
-      },
-      maxTokens: {
-        min: 1,
-        max: 16_384,
-        default: 4_096,
-        current: 4_096,
-      },
-    },
-    isNew: false,
-  },
+  // 已移除其他模型，只保留 Grok
+  // {
+  //   name: "openrouter/deepseek/deepseek-chat",
+  //   label: "DeepSeek Chat (OpenRouter)",
+  //   ...
+  // },
+  // {
+  //   name: "openrouter/anthropic/claude-3.5-sonnet",
+  //   label: "Claude 3.5 Sonnet (OpenRouter)",
+  //   ...
+  // },
+  // {
+  //   name: "openrouter/openai/gpt-4o-mini",
+  //   label: "GPT-4o Mini (OpenRouter)",
+  //   ...
+  // },
 ];
 
 const GEMINI_MODELS: ModelConfigurationParams[] = [
@@ -692,15 +648,16 @@ export const THINKING_MODELS = [
   "groq/deepseek-r1-distill-llama-70b",
 ];
 
+// 只保留 Grok 模型，移除所有其他模型
 export const ALL_MODELS: ModelConfigurationParams[] = [
-  ...OPENAI_MODELS,
-  ...ANTHROPIC_MODELS,
-  ...FIREWORKS_MODELS,
-  ...GEMINI_MODELS,
-  ...AZURE_MODELS,
-  ...OLLAMA_MODELS,
-  ...GROQ_MODELS,
-  ...OPENROUTER_MODELS,
+  // ...OPENAI_MODELS,
+  // ...ANTHROPIC_MODELS,
+  // ...FIREWORKS_MODELS,
+  // ...GEMINI_MODELS,
+  // ...AZURE_MODELS,
+  // ...OLLAMA_MODELS,
+  // ...GROQ_MODELS,
+  ...OPENROUTER_MODELS,  // 只包含 Grok 模型
 ];
 
 type OPENAI_MODEL_NAMES = (typeof OPENAI_MODELS)[number]["name"];
