@@ -298,6 +298,20 @@ export const getModelConfig = (
     };
   }
 
+  // OpenRouter - 聚合LLM服务，使用OpenAI兼容API
+  if (customModelName.startsWith("openrouter/")) {
+    // OpenRouter模型名格式: openrouter/provider/model
+    // 例如: openrouter/deepseek/deepseek-chat -> deepseek/deepseek-chat
+    const actualModelName = customModelName.replace("openrouter/", "");
+    return {
+      ...providerConfig,
+      modelName: actualModelName,
+      modelProvider: "openai", // OpenRouter使用OpenAI兼容API
+      apiKey: process.env.OPENROUTER_API_KEY,
+      baseUrl: "https://openrouter.ai/api/v1",
+    };
+  }
+
   throw new Error("Unknown model provider");
 };
 
