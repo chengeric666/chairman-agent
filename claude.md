@@ -86,7 +86,21 @@ MVP-3: OpenDeepResearch改造       [##########] 100% ✅ 完成+汉化+测试
 - [x] README更新
 - [x] claude.md创建
 
-### 最新完成事项（2025-11-23更新） ✅
+### 最新完成事项（2025-11-24更新） ✅
+
+#### 🔧 OpenRouter集成修复 (2025-11-24)
+- [x] **OpenRouter 401错误完整解决** - 修复LangChain配置问题
+  - **问题**: OpenRouter API key配置正确但请求发送到OpenAI导致401错误
+  - **根因**: LangChain的`initChatModel`不支持顶级`baseUrl`参数
+  - **解决**: 使用`configuration.baseURL`（大写）嵌套配置
+  - **文件**: `thirdparty/open-canvas/apps/agents/src/utils.ts` (lines 400-440)
+  - **验证**: ✅ Grok模型成功生成内容，无401错误
+  - **文档**: 详见 `docs/troubleshooting/OPENROUTER_401_FIX.md`
+
+**关键经验**:
+- LangChain集成第三方OpenAI-compatible APIs时必须使用`configuration.baseURL`模式
+- 顶级`baseUrl`（小写）参数会被忽略
+- 这个模式同样适用于Azure OpenAI和其他自托管APIs
 
 #### MVP-2/3改造（完全汉化版）
 - [x] **OpenCanvas知识库客户端** - TypeScript实现，支持向量/全文/混合搜索

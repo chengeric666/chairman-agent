@@ -397,6 +397,16 @@ export async function getModelFromConfig(
     (m) => m === modelName
   );
 
+  // Debug logging for OpenRouter configuration
+  if (baseUrl) {
+    console.log('[OpenRouter DEBUG] Model config:', {
+      modelName,
+      modelProvider,
+      baseUrl,
+      hasApiKey: !!apiKey,
+    });
+  }
+
   return await initChatModel(modelName, {
     modelProvider,
     // Certain models (e.g., OpenAI o1) do not support passing the temperature param.
@@ -407,8 +417,16 @@ export async function getModelFromConfig(
           // streaming: false,
           // disableStreaming: true,
         }),
-    ...(baseUrl ? { baseUrl } : {}),
-    ...(apiKey ? { apiKey } : {}),
+    // ✅ FIXED: LangChain OpenAI requires configuration.baseURL (uppercase URL!)
+    // Previously used top-level baseUrl which was ignored by initChatModel
+    ...(baseUrl || apiKey
+      ? {
+          configuration: {
+            ...(baseUrl ? { baseURL: baseUrl } : {}),
+            ...(apiKey ? { apiKey } : {}),
+          },
+        }
+      : {}),
     ...(azureConfig != null
       ? {
           azureOpenAIApiKey: azureConfig.azureOpenAIApiKey,
