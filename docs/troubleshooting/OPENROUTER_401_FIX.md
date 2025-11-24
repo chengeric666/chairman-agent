@@ -217,10 +217,42 @@ if (
 
 ### 如果仍有401错误
 
+#### 错误类型1: "Incorrect API key provided"
+**症状**: 错误消息提到 `platform.openai.com`
+**原因**: 代码配置问题，请求发送到错误的端点
+**解决**: 确保使用 `configuration.baseURL` 模式（见上面的解决方案）
+
+#### 错误类型2: "User not found"
+**症状**:
+- 错误消息提到 `openrouter.ai`（正确的端点）
+- DEBUG日志显示正确的baseUrl配置
+- 有些请求成功，有些失败（间歇性）
+
+**原因**: OpenRouter账户或API Key问题
+**解决步骤**:
+1. **检查API Key状态** - 登录 https://openrouter.ai/keys
+   - 确认API key未被禁用（disabled）
+   - 如果被禁用，点击"Enable"重新启用
+2. **检查账户余额** - 确认有足够的credits或配额
+3. **检查模型访问权限** - 确认账户有权访问所选模型
+4. **重新生成API Key**（如果需要）- 如果key被撤销，生成新的key并更新`.env`
+
+**诊断方法**:
+```bash
+# 1. 检查DEBUG日志
+grep "OpenRouter DEBUG" logs/agents.log
+
+# 2. 如果看到正确的baseUrl，问题不在代码
+# 3. 登录OpenRouter dashboard检查账户状态
+```
+
+#### 通用诊断步骤
+
 1. **检查DEBUG日志** - 确认`[OpenRouter DEBUG]`输出显示正确的baseUrl
 2. **验证API Key** - 确保环境变量中的API key正确
 3. **检查模型名称** - 确认使用的模型名称格式正确
 4. **重启服务** - 确保代码更改已生效
+5. **查看服务日志** - 查找"Background run succeeded"确认是否有成功的请求
 
 ### 常见问题
 
