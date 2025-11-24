@@ -639,3 +639,23 @@ export function getStringFromContent(content: MessageContent): string {
     .flatMap((c) => ("text" in c ? (c.text as string) : []))
     .join("\n");
 }
+
+/**
+ * 初始化Agent配置，包括知识库配置
+ * 用于传递知识库API URL和密钥给Agent节点
+ */
+export const initializeAgentConfig = (config?: LangGraphRunnableConfig) => {
+  const configurable = {
+    ...(config?.configurable || {}),
+    // 知识库配置
+    KNOWLEDGE_BASE_API_URL:
+      process.env.KNOWLEDGE_BASE_API_URL || "http://localhost:5055",
+    KNOWLEDGE_BASE_API_KEY:
+      process.env.KNOWLEDGE_BASE_API_KEY || "chairman",
+  };
+
+  return {
+    ...config,
+    configurable,
+  };
+};

@@ -923,3 +923,92 @@ def get_tavily_api_key(config: RunnableConfig):
         return api_keys.get("TAVILY_API_KEY")
     else:
         return os.getenv("TAVILY_API_KEY")
+
+
+##########################
+# Knowledge Base Search Tool Utils (董智知识库)
+##########################
+
+KNOWLEDGE_BASE_SEARCH_DESCRIPTION = (
+    "从董智内部知识库中搜索相关信息。"
+    "用于查询高管的思想资料、战略文档、案例和历史决策记录。"
+    "这是一个私有知识库，包含的信息比网络搜索更相关和准确。"
+)
+
+
+@tool(description=KNOWLEDGE_BASE_SEARCH_DESCRIPTION)
+async def knowledge_base_search(
+    queries: List[str],
+    max_results: Annotated[int, InjectedToolArg] = 10,
+    search_type: Annotated[Literal["vector", "fulltext", "hybrid"], InjectedToolArg] = "vector",
+    config: RunnableConfig = None
+) -> str:
+    """从董智知识库搜索相关信息。
+
+    Args:
+        queries: 要搜索的查询列表
+        max_results: 每个查询返回的最大结果数
+        search_type: 搜索类型 (vector/fulltext/hybrid)
+        config: 运行时配置
+
+    Returns:
+        格式化的搜索结果字符串
+    """
+    try:
+        from open_deep_research.knowledge_base_client import get_knowledge_base_client
+
+        # 获取配置
+        configurable = Configuration.from_runnable_config(config)
+
+        # 获取或创建知识库客户端
+        kb_client = get_knowledge_base_client(
+            api_url=configurable.knowledge_base_url,
+            api_key=configurable.knowledge_base_api_key,
+        )
+
+        # 执行搜索
+        results = await kb_client.search(
+            queries,
+            search_type=configurable.knowledge_base_search_type or search_type,
+            limit=max_results,
+        )
+
+        return results
+
+    except Exception as e:
+        logging.error(f"知识库搜索失败: {e}")
+        return f"知识库搜索失败: {str(e)}\n\n请检查:\n1. 知识库API服务是否正常运行\n2. API URL 和密钥是否配置正确\n3. 网络连接是否正常"
+
+
+def get_tools(config: RunnableConfig = None) -> List[BaseTool]:
+    """获取所有可用的工具
+
+    根据配置的搜索API，返回相应的搜索工具。
+
+    Args:
+        config: 运行时配置
+
+    Returns:
+        工具列表
+    """
+    # 获取配置
+    configurable = Configuration.from_runnable_config(config) if config else Configuration()
+
+    tools = []
+
+    # 根据配置的搜索API添加相应的搜索工具
+    if configurable.search_api == SearchAPI.KNOWLEDGE_BASE:
+        tools.append(knowledge_base_search)
+    elif configurable.search_api == SearchAPI.TAVILY:
+        tools.append(tavily_search)
+    elif configurable.search_api == SearchAPI.OPENAI:
+        # OpenAI内置搜索工具需要在主Agent中配置
+        pass
+    elif configurable.search_api == SearchAPI.ANTHROPIC:
+        # Anthropic内置搜索工具需要在主Agent中配置
+        pass
+    elif configurable.search_api == SearchAPI.NONE:
+        # 不使用任何搜索工具
+        pass
+
+    return tools

@@ -10,10 +10,11 @@ from pydantic import BaseModel, Field
 
 class SearchAPI(Enum):
     """Enumeration of available search API providers."""
-    
+
     ANTHROPIC = "anthropic"
     OPENAI = "openai"
     TAVILY = "tavily"
+    KNOWLEDGE_BASE = "knowledge_base"  # 新增: 使用内部知识库
     NONE = "none"
 
 class MCPConfig(BaseModel):
@@ -76,17 +77,18 @@ class Configuration(BaseModel):
     )
     # Research Configuration
     search_api: SearchAPI = Field(
-        default=SearchAPI.TAVILY,
+        default=SearchAPI.KNOWLEDGE_BASE,  # 改为默认使用知识库
         metadata={
             "x_oap_ui_config": {
                 "type": "select",
-                "default": "tavily",
-                "description": "Search API to use for research. NOTE: Make sure your Researcher Model supports the selected search API.",
+                "default": "knowledge_base",
+                "description": "搜索引擎选择。注意：确保选定的模型支持所选的搜索API。",
                 "options": [
-                    {"label": "Tavily", "value": SearchAPI.TAVILY.value},
-                    {"label": "OpenAI Native Web Search", "value": SearchAPI.OPENAI.value},
-                    {"label": "Anthropic Native Web Search", "value": SearchAPI.ANTHROPIC.value},
-                    {"label": "None", "value": SearchAPI.NONE.value}
+                    {"label": "董智知识库", "value": SearchAPI.KNOWLEDGE_BASE.value},
+                    {"label": "Tavily网络搜索", "value": SearchAPI.TAVILY.value},
+                    {"label": "OpenAI网络搜索", "value": SearchAPI.OPENAI.value},
+                    {"label": "Anthropic网络搜索", "value": SearchAPI.ANTHROPIC.value},
+                    {"label": "无搜索", "value": SearchAPI.NONE.value}
                 ]
             }
         }
@@ -207,6 +209,55 @@ class Configuration(BaseModel):
                 "type": "number",
                 "default": 10000,
                 "description": "Maximum output tokens for final report model"
+            }
+        }
+    )
+    # 知识库配置
+    knowledge_base_url: str = Field(
+        default=os.environ.get("KB_API_URL", "http://localhost:5055"),
+        metadata={
+            "x_oap_ui_config": {
+                "type": "text",
+                "default": "http://localhost:5055",
+                "description": "知识库API服务器地址 (董智Open-Notebook)"
+            }
+        }
+    )
+    knowledge_base_api_key: str = Field(
+        default=os.environ.get("KB_API_KEY", "chairman"),
+        metadata={
+            "x_oap_ui_config": {
+                "type": "password",
+                "default": "chairman",
+                "description": "知识库API密钥"
+            }
+        }
+    )
+    knowledge_base_search_limit: int = Field(
+        default=10,
+        metadata={
+            "x_oap_ui_config": {
+                "type": "slider",
+                "default": 10,
+                "min": 1,
+                "max": 50,
+                "step": 1,
+                "description": "每次知识库搜索返回的结果数量"
+            }
+        }
+    )
+    knowledge_base_search_type: str = Field(
+        default="vector",
+        metadata={
+            "x_oap_ui_config": {
+                "type": "select",
+                "default": "vector",
+                "description": "知识库搜索类型",
+                "options": [
+                    {"label": "向量搜索 (语义搜索)", "value": "vector"},
+                    {"label": "全文搜索 (关键词搜索)", "value": "fulltext"},
+                    {"label": "混合搜索", "value": "hybrid"},
+                ]
             }
         }
     )
