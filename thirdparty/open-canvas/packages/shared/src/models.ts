@@ -467,6 +467,26 @@ const GROQ_MODELS: ModelConfigurationParams[] = [
  */
 const OPENROUTER_MODELS: ModelConfigurationParams[] = [
   {
+    name: "openrouter/x-ai/grok-4.1-fast:free",
+    label: "Grok 4.1 Fast (Free)",
+    config: {
+      provider: "openrouter",
+      temperatureRange: {
+        min: 0,
+        max: 1,
+        default: 0.5,
+        current: 0.5,
+      },
+      maxTokens: {
+        min: 1,
+        max: 131_072,
+        default: 4_096,
+        current: 4_096,
+      },
+    },
+    isNew: true,
+  },
+  {
     name: "openrouter/deepseek/deepseek-chat",
     label: "DeepSeek Chat (OpenRouter)",
     config: {
@@ -484,7 +504,7 @@ const OPENROUTER_MODELS: ModelConfigurationParams[] = [
         current: 4_096,
       },
     },
-    isNew: true,
+    isNew: false,
   },
   {
     name: "openrouter/anthropic/claude-3.5-sonnet",
