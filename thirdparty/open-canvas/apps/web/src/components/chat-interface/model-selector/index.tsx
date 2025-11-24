@@ -219,6 +219,9 @@ export default function ModelSelector({
   const groqModelGroup = allAllowedModels.filter(
     (m) => m.config.provider === "groq"
   );
+  const openrouterModelGroup = allAllowedModels.filter(
+    (m) => m.config.provider === "openrouter"
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -367,6 +370,26 @@ export default function ModelSelector({
             {ollamaModelGroup.length > 0 && (
               <CommandGroup heading="Ollama" className="w-full">
                 {ollamaModelGroup.map((model) => {
+                  const config = modelConfigs[model.name];
+                  return (
+                    <CommandModelItem
+                      key={model.name}
+                      model={model}
+                      handleModelChange={handleModelChange}
+                      config={config}
+                      selectedModelName={modelName}
+                      openConfigModelId={openConfigModelId}
+                      setOpenConfigModelId={setOpenConfigModelId}
+                      setModelConfig={setModelConfig}
+                    />
+                  );
+                })}
+              </CommandGroup>
+            )}
+
+            {openrouterModelGroup.length > 0 && (
+              <CommandGroup heading="OpenRouter" className="w-full">
+                {openrouterModelGroup.map((model) => {
                   const config = modelConfigs[model.name];
                   return (
                     <CommandModelItem
