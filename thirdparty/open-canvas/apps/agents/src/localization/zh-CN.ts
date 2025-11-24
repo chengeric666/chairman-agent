@@ -225,7 +225,7 @@ export const zhCNLocalization = {
   // ==================== 协作相关 ====================
   collaboration: {
     sharing: "分享",
-    sharing desc: "与团队成员分享创作",
+    "sharing desc": "与团队成员分享创作",
     comments: "评论",
     feedback: "反馈",
     review: "评审",

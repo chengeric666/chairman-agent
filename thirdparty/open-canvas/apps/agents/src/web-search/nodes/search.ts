@@ -1,4 +1,4 @@
-import { SearchResult } from "@opencanvas/shared/types";
+// import { SearchResult } from "@opencanvas/shared/types";
 import { WebSearchState } from "../state.js";
 import { getKnowledgeBaseClient } from "../../knowledge-base/client.js";
 

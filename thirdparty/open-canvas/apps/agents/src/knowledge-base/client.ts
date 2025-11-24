@@ -89,11 +89,11 @@ export class KnowledgeBaseClient {
             (item: any): SearchResult => ({
               pageContent: item.content || item.text || "",
               metadata: {
+                id: item.id || item.source_id || "",
                 title: item.title || "Unknown",
                 url: item.source_id || item.id || "",
                 publishedDate: item.created_at || new Date().toISOString(),
                 author: item.author || "Unknown",
-                relevance: item.score || item.relevance || 0.5,
               },
             })
           );

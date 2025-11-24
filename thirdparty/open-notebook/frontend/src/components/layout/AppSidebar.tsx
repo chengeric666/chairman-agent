@@ -39,6 +39,9 @@ import {
   FileText,
   Plus,
   Wrench,
+  PenLine,
+  Microscope,
+  ExternalLink,
 } from 'lucide-react'
 
 const navigation = [
@@ -56,8 +59,10 @@ const navigation = [
     ],
   },
   {
-    title: '创作',
+    title: 'AI创作',
     items: [
+      { name: '开智创作', href: 'http://localhost:8080', icon: PenLine, external: true as const },
+      { name: '深度研究', href: 'http://localhost:2024', icon: Microscope, external: true as const },
       { name: '播客', href: '/podcasts', icon: Mic },
     ],
   },
@@ -262,7 +267,9 @@ export function AppSidebar() {
                 )}
 
                 {section.items.map((item) => {
-                  const isActive = pathname.startsWith(item.href)
+                  const isExternal = 'external' in item && item.external === true
+                  const isActive = !isExternal && pathname.startsWith(item.href)
+
                   const button = (
                     <Button
                       variant={isActive ? 'secondary' : 'ghost'}
@@ -273,28 +280,47 @@ export function AppSidebar() {
                       )}
                     >
                       <item.icon className="h-4 w-4" />
-                      {!isCollapsed && <span>{item.name}</span>}
+                      {!isCollapsed && (
+                        <>
+                          <span>{item.name}</span>
+                          {isExternal && (
+                            <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
+                          )}
+                        </>
+                      )}
                     </Button>
+                  )
+
+                  const linkElement = isExternal ? (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {button}
+                    </a>
+                  ) : (
+                    <Link key={item.name} href={item.href}>
+                      {button}
+                    </Link>
                   )
 
                   if (isCollapsed) {
                     return (
                       <Tooltip key={item.name}>
                         <TooltipTrigger asChild>
-                          <Link href={item.href}>
-                            {button}
-                          </Link>
+                          {linkElement}
                         </TooltipTrigger>
-                        <TooltipContent side="right">{item.name}</TooltipContent>
+                        <TooltipContent side="right">
+                          {item.name}
+                          {isExternal && ' (新窗口)'}
+                        </TooltipContent>
                       </Tooltip>
                     )
                   }
 
-                  return (
-                    <Link key={item.name} href={item.href}>
-                      {button}
-                    </Link>
-                  )
+                  return linkElement
                 })}
               </div>
             </div>
