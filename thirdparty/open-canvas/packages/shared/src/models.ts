@@ -678,9 +678,10 @@ export type ALL_MODEL_NAMES =
   | GROQ_MODEL_NAMES
   | OPENROUTER_MODEL_NAMES;
 
-export const DEFAULT_MODEL_NAME: ALL_MODEL_NAMES = OPENAI_MODELS[1].name;
+// 使用 Grok 作为默认模型（OpenRouter的第一个模型）
+export const DEFAULT_MODEL_NAME: ALL_MODEL_NAMES = OPENROUTER_MODELS[0].name;
 export const DEFAULT_MODEL_CONFIG: CustomModelConfig = {
-  ...OPENAI_MODELS[1].config,
-  temperatureRange: { ...OPENAI_MODELS[1].config.temperatureRange },
-  maxTokens: { ...OPENAI_MODELS[1].config.maxTokens },
+  ...OPENROUTER_MODELS[0].config,
+  temperatureRange: { ...OPENROUTER_MODELS[0].config.temperatureRange },
+  maxTokens: { ...OPENROUTER_MODELS[0].config.maxTokens },
 };
