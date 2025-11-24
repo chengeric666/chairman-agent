@@ -113,8 +113,10 @@ if (customModelName.startsWith("openrouter/")) {
 **步骤 4: 环境变量配置** (`.env`)
 ```bash
 # OpenRouter API 配置
-OPENROUTER_API_KEY=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
+OPENROUTER_API_KEY=sk-or-v1-***YOUR_OPENROUTER_KEY***
 ```
+
+> ⚠️ **安全提示**: 请使用您自己的OpenRouter API key。切勿将API key提交到公共仓库。
 
 **效果验证**:
 - ✅ OpenRouter provider 正确注册
