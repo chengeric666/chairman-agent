@@ -40,6 +40,11 @@ dependencies = [
     "surrealdb>=1.0.4",
     "podcast-creator>=0.7.0",
     "surreal-commands>=1.2.0",
+    # OCR dependencies for image-only PDFs
+    "PyMuPDF>=1.24.0",
+    "paddlepaddle>=2.6.0",
+    "paddleocr>=2.8.0",
+    "Pillow>=10.0.0",
 ]
 
 [tool.setuptools]

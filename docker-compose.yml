@@ -88,9 +88,17 @@ services:
       timeout: 10s
       retries: 3
 
-  # 5. Open-Notebook - Plan 1的知识库核心（使用官方镜像，后续手工中文化）
+  # 5. Open-Notebook - Plan 1的知识库核心（临时使用官方镜像进行运行时安装）
   open_notebook:
-    image: lfnovo/open_notebook:v1-latest-single
+    # 使用扩展镜像（Dockerfile.ocr）而非官方镜像
+    # 注释: 如需切换回官方镜像，注释掉build部分，取消注释下面的image行
+    # build:
+    #   context: ./thirdparty/open-notebook
+    #   dockerfile: Dockerfile.ocr
+    #   args:
+    #     BASE_VERSION: v1-latest-single  # 可灵活指定官方镜像版本
+    # image: chairman_open_notebook:ocr-v1.0.0
+    image: lfnovo/open_notebook:v1-latest-single  # 临时使用官方镜像进行运行时安装
     container_name: chairman_open_notebook
     ports:
       - "8502:8502"   # Next.js前端UI
@@ -124,6 +132,10 @@ services:
       - DEFAULT_TEXT_TO_SPEECH_MODEL=
     volumes:
       - ./data/notebook:/app/data
+      # 热更新：挂载前端代码（中文化+OpenCanvas集成）
+      - ./thirdparty/open-notebook/frontend:/app/frontend
+      # OCR模型持久化：避免容器重启后重复下载500MB模型
+      - ./data/paddleocr_models:/root/.paddleocr
     depends_on:
       - surreal
     networks:
@@ -211,6 +223,69 @@ services:
     networks:
       - chairman_network
     command: python -m uvicorn src.api.gateway:app --host 0.0.0.0 --port 8001 --reload
+
+  # ============================================================
+  # OpenCanvas服务 - MVP-2协同创作工具
+  # ============================================================
+
+  # 9. OpenCanvas Agents - LangGraph后端服务
+  opencanvas_agents:
+    build:
+      context: ./thirdparty/open-canvas
+      dockerfile: apps/agents/Dockerfile
+    container_name: chairman_opencanvas_agents
+    ports:
+      - "54367:54367"  # LangGraph API端口
+    environment:
+      # OpenRouter配置（使用Grok模型）
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    volumes:
+      - ./thirdparty/open-canvas/apps/agents:/app/apps/agents
+      - ./thirdparty/open-canvas/packages:/app/packages
+    networks:
+      - chairman_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:54367/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # 10. OpenCanvas Web - Next.js前端服务
+  opencanvas_web:
+    build:
+      context: ./thirdparty/open-canvas
+      dockerfile: apps/web/Dockerfile
+    container_name: chairman_opencanvas_web
+    ports:
+      - "8080:8080"  # Next.js Web UI端口
+    environment:
+      # LangGraph API配置（连接agents服务）
+      - NEXT_PUBLIC_API_URL=http://opencanvas_agents:54367
+      # 禁用其他LLM提供商（只使用OpenRouter/Grok）
+      - NEXT_PUBLIC_FIREWORKS_ENABLED=false
+      - NEXT_PUBLIC_GEMINI_ENABLED=false
+      - NEXT_PUBLIC_ANTHROPIC_ENABLED=false
+      - NEXT_PUBLIC_OPENAI_ENABLED=false
+      - NEXT_PUBLIC_AZURE_ENABLED=false
+      - NEXT_PUBLIC_OLLAMA_ENABLED=false
+      - NEXT_PUBLIC_GROQ_ENABLED=false
+      # Next.js配置
+      - PORT=8080
+      - NODE_ENV=production
+    volumes:
+      - ./thirdparty/open-canvas/apps/web:/app/apps/web
+      - ./thirdparty/open-canvas/packages:/app/packages
+    depends_on:
+      - opencanvas_agents
+    networks:
+      - chairman_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 networks:
   chairman_network:

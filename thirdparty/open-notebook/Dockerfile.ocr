@@ -1,0 +1,145 @@
+# Dockerfile.ocr
+# 基于官方Open-Notebook镜像扩展，添加OCR功能支持
+#
+# 使用方法：
+# docker compose build open_notebook
+# docker compose up -d open_notebook
+#
+# 版本历史：
+# v1.0.0 (2025-11-25) - 初始版本，添加PaddleOCR和PyMuPDF支持
+
+# ARG允许通过docker-compose.yml灵活指定基础镜像版本
+ARG BASE_VERSION=v1-latest-single
+
+FROM lfnovo/open_notebook:${BASE_VERSION}
+
+# 维护者信息
+LABEL maintainer="Chairman Agent Team"
+LABEL description="Extended Open-Notebook image with OCR capabilities"
+LABEL version="1.0.0"
+
+# 切换到root用户以安装系统包
+USER root
+
+# ========================================
+# 阶段1：配置APT镜像源（解决网络问题）
+# ========================================
+# 使用清华大学镜像源（中国大陆）替换所有Debian官方源
+RUN if [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then \
+      # 备份原有源列表
+      mv /etc/apt/sources.list /etc/apt/sources.list.bak && \
+      # ARM64架构使用清华镜像（完全替换）
+      echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
+      echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+      echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian-security bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+      # 禁用原有的sources.list.d中的源
+      rm -f /etc/apt/sources.list.d/debian.sources 2>/dev/null || true; \
+    fi
+
+# ========================================
+# 阶段2：安装OCR所需的系统依赖
+# ========================================
+# 这些库是PaddleOCR和OpenCV所需的系统级依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # OpenCV核心库依赖
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
+    libgomp1 \
+    # 图像处理依赖
+    libopencv-dev \
+    # 清理apt缓存以减小镜像体积
+    && rm -rf /var/lib/apt/lists/*
+
+# ========================================
+# 阶段3：安装Python OCR包
+# ========================================
+# 配置PyPI镜像源（清华大学）加速包下载
+RUN /app/.venv/bin/pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 使用容器内已有的虚拟环境安装Python包
+RUN /app/.venv/bin/pip install --no-cache-dir \
+    # PDF处理库
+    PyMuPDF>=1.24.0 \
+    # PaddlePaddle深度学习框架（CPU版本）
+    paddlepaddle>=2.6.0 \
+    # PaddleOCR OCR引擎
+    paddleocr>=2.8.0 \
+    # 图像处理库（升级到最新版本）
+    Pillow>=10.0.0 \
+    # 科学计算库（PaddleOCR依赖）
+    shapely>=2.0.0 \
+    pyclipper>=1.3.0
+
+# ========================================
+# 阶段4：复制OCR代码文件（可选）
+# ========================================
+# 注意：如果OCR功能代码尚未开发，可以跳过此步骤
+# 这些文件需要在构建前准备好，否则构建会失败
+#
+# 取消注释以下行以启用代码复制：
+# COPY open_notebook/utils/pdf_ocr_utils.py /app/open_notebook/utils/
+# COPY open_notebook/graphs/source.py /app/open_notebook/graphs/
+#
+# 或者使用通配符复制所有OCR相关文件：
+# COPY open_notebook/utils/ocr_*.py /app/open_notebook/utils/
+# COPY open_notebook/utils/pdf_*.py /app/open_notebook/utils/
+
+# ========================================
+# 阶段4：配置和清理
+# ========================================
+
+# 确保日志目录存在并设置权限
+RUN mkdir -p /app/logs && chown -R 1000:1000 /app/logs
+
+# 恢复到非root用户（安全最佳实践）
+# Open-Notebook使用UID 1000
+USER 1000
+
+# 设置工作目录
+WORKDIR /app
+
+# 暴露端口（继承自基础镜像，但显式声明以提高可读性）
+EXPOSE 8501
+
+# 健康检查（确保服务正常运行）
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8501/_stcore/health || exit 1
+
+# 继承官方镜像的启动命令
+# 使用supervisord管理多个进程
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+
+# ========================================
+# 构建参数说明
+# ========================================
+# BASE_VERSION: 基础镜像版本标签
+#   - v1-latest-single: 最新单容器版本（开发环境）
+#   - v1.x.x: 特定版本号（生产环境）
+#
+# 示例：
+# docker build \
+#   --build-arg BASE_VERSION=v1-latest-single \
+#   -t chairman_open_notebook:ocr-v1.0.0 \
+#   -f Dockerfile.ocr \
+#   .
+#
+# ========================================
+# 镜像层次结构
+# ========================================
+# 1. 官方基础镜像 (lfnovo/open_notebook:v1-latest-single)
+#    ↓
+# 2. 系统依赖层 (apt-get install)
+#    ↓
+# 3. Python依赖层 (pip install)
+#    ↓
+# 4. 代码文件层 (COPY - 可选)
+#    ↓
+# 5. 配置清理层 (权限、用户)
+#
+# 这种分层结构优化了Docker构建缓存：
+# - 系统依赖变化少，可以重用缓存
+# - Python依赖变化较少，大部分时候可以重用缓存
+# - 代码文件变化频繁，但只影响最上层

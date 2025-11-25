@@ -1,0 +1,67 @@
+[
+  {
+    "name": "Open-Notebook健康检查",
+    "status": "PASSED",
+    "details": {
+      "status": "healthy",
+      "data": {
+        "version": "1.2.1",
+        "latestVersion": "1.2.1",
+        "hasUpdate": false,
+        "dbStatus": "online"
+      }
+    }
+  },
+  {
+    "name": "LangGraph API健康检查",
+    "status": "PASSED",
+    "details": {
+      "status": "healthy",
+      "data": {
+        "version": "0.0.58",
+        "langgraph_js_version": "0.4.4",
+        "context": "js",
+        "flags": {
+          "assistants": true,
+          "crons": false,
+          "langsmith": false,
+          "langsmith_tracing_replicas": true
+        }
+      }
+    }
+  },
+  {
+    "name": "OpenCanvas Web UI健康检查",
+    "status": "FAILED",
+    "details": null
+  },
+  {
+    "name": "知识库搜索功能",
+    "status": "FAILED",
+    "details": null
+  },
+  {
+    "name": "知识库客户端模块验证",
+    "status": "PASSED",
+    "details": {
+      "status": "complete",
+      "methods": [
+        "search",
+        "healthCheck",
+        "getStats"
+      ]
+    }
+  },
+  {
+    "name": "Open-Notebook菜单集成验证",
+    "status": "PASSED",
+    "details": {
+      "status": "integrated",
+      "features": [
+        "ai_menu",
+        "opencanvas_link",
+        "external_icon"
+      ]
+    }
+  }
+]

@@ -5,6 +5,7 @@ import { ThreadPrimitive } from "@assistant-ui/react";
 import { Thread as ThreadType } from "@langchain/langgraph-sdk";
 import { ArrowDownIcon, PanelRightOpen, SquarePen } from "lucide-react";
 import { Dispatch, FC, SetStateAction } from "react";
+import Image from "next/image";
 import { ReflectionsDialog } from "../reflections-dialog/ReflectionsDialog";
 import { useLangSmithLinkToolUI } from "../tool-hooks/LangSmithLinkToolUI";
 import { TooltipIconButton } from "../ui/assistant-ui/tooltip-icon-button";
@@ -68,7 +69,7 @@ export const Thread: FC<ThreadProps> = (props: ThreadProps) => {
   const { user } = useUserContext();
 
   // Render the LangSmith trace link
-  useLangSmithLinkToolUI();
+  // useLangSmithLinkToolUI(); // 已禁用 LangSmith 追踪链接
 
   const handleNewSession = async () => {
     if (!user) {
@@ -97,7 +98,22 @@ export const Thread: FC<ThreadProps> = (props: ThreadProps) => {
           <ThreadHistory
             switchSelectedThreadCallback={switchSelectedThreadCallback}
           />
-          <TighterText className="text-xl">董智</TighterText>
+          <div className="flex items-center gap-2">
+            <div className="relative flex items-center justify-center">
+              <Image
+                src="/swordfish-logo.png"
+                alt="TuringFlow"
+                width={200}
+                height={200}
+                style={{
+                  width: 'auto',
+                  height: '24px',
+                  objectFit: 'contain'
+                }}
+              />
+            </div>
+            <TighterText className="text-xl">董智</TighterText>
+          </div>
           {!hasChatStarted && (
             <ModelSelector
               modelName={modelName}

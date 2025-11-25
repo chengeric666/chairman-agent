@@ -248,6 +248,28 @@ export function TextRendererComponent(props: TextRendererProps) {
 
   return (
     <div className="w-full h-full mt-2 flex flex-col border-t-[1px] border-gray-200 overflow-y-auto py-5 relative">
+      <style jsx global>{`
+        /* 确保 BlockNote 菜单不被容器裁剪 */
+        .bn-formatting-toolbar,
+        .bn-suggestion-menu,
+        .bn-color-picker-dropdown {
+          z-index: 50 !important;
+        }
+
+        .pulse-text .bn-block-group {
+          animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.3;
+          }
+        }
+      `}</style>
       {props.isHovering && artifact && (
         <div className="absolute flex gap-2 top-2 right-4 z-10">
           <CopyText currentArtifactContent={getArtifactContent(artifact)} />
@@ -262,24 +284,9 @@ export function TextRendererComponent(props: TextRendererProps) {
         />
       ) : (
         <>
-          <style jsx global>{`
-            .pulse-text .bn-block-group {
-              animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-            }
-
-            @keyframes pulse {
-              0%,
-              100% {
-                opacity: 1;
-              }
-              50% {
-                opacity: 0.3;
-              }
-            }
-          `}</style>
           <BlockNoteView
             theme="light"
-            formattingToolbar={false}
+            formattingToolbar={true}
             slashMenu={false}
             onCompositionStartCapture={() => (isComposition.current = true)}
             onCompositionEndCapture={() => (isComposition.current = false)}

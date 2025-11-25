@@ -23,7 +23,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <style dangerouslySetInnerHTML={{ __html: `
           body {
-            font-family: ${inter.style.fontFamily}, 'Noto Sans SC', 'Microsoft YaHei', 'SimHei', sans-serif;
+            font-family: 'Noto Sans SC', 'Microsoft YaHei', 'SimHei', sans-serif;
           }
         ` }} />
       </head>

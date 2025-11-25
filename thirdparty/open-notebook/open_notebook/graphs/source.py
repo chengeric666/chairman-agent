@@ -14,6 +14,7 @@ from open_notebook.domain.models import Model, ModelManager
 from open_notebook.domain.notebook import Asset, Source
 from open_notebook.domain.transformation import Transformation
 from open_notebook.graphs.transformation import graph as transform_graph
+from open_notebook.utils.pdf_ocr_utils import process_pdf_with_ocr_fallback
 
 
 class SourceState(TypedDict):
@@ -64,6 +65,37 @@ async def content_process(state: SourceState) -> dict:
         # Continue without custom audio model (content-core will use its default)
 
     processed_state = await extract_content(content_state)
+
+    # OCR fallback for image-only PDFs
+    if processed_state.file_path and processed_state.file_path.lower().endswith('.pdf'):
+        original_content = processed_state.content or ""
+
+        # Only try OCR if extraction produced little/no content
+        if len(original_content.strip()) < 100:
+            logger.info(f"PDF extraction produced minimal content ({len(original_content)} chars), checking for OCR fallback")
+
+            try:
+                ocr_text, ocr_metadata = process_pdf_with_ocr_fallback(
+                    processed_state.file_path,
+                    original_content,
+                    max_pages=100  # Limit to 100 pages to avoid excessive processing
+                )
+
+                if ocr_metadata:
+                    # OCR was applied
+                    processed_state.content = ocr_text
+                    logger.info(
+                        f"OCR completed: {ocr_metadata['pages_processed']} pages, "
+                        f"{ocr_metadata['chars_extracted']} chars extracted using {ocr_metadata['ocr_engine']}"
+                    )
+                else:
+                    # No OCR needed or failed
+                    logger.debug("No OCR applied - using original extraction result")
+
+            except Exception as e:
+                logger.error(f"OCR fallback failed: {e}")
+                # Continue with original content if OCR fails
+
     return {"content_state": processed_state}
 
 

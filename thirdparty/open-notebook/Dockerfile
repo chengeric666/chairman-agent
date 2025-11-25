@@ -6,9 +6,11 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Install system dependencies required for building certain Python packages
 # Add Node.js 20.x LTS for building frontend
+# Add image processing libraries for OCR support
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     gcc g++ git make \
     curl \
+    libgl1-mesa-glx libglib2.0-0 libsm6 libxrender1 libxext6 \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
@@ -46,10 +48,12 @@ FROM python:3.12-slim-bookworm AS runtime
 
 # Install only runtime system dependencies (no build tools)
 # Add Node.js 20.x LTS for running frontend
+# Add image processing libraries for OCR support
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     ffmpeg \
     supervisor \
     curl \
+    libgl1-mesa-glx libglib2.0-0 libsm6 libxrender1 libxext6 \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*

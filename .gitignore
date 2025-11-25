@@ -78,3 +78,5 @@ test-results/
 # open-canvas/
 # open_deep_research/
 # open-notebook/
+docs/assets/pdfs/*.pdf
+交互记录*.md

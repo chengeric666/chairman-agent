@@ -1,14 +1,22 @@
-# Chairman Agent Plan 1 部署指南
+# Chairman Agent 部署指南
 
-**文档版本**: 1.0
-**最后更新**: 2025-11-23
-**部署阶段**: Week 1 - 基础服务部署
+**文档版本**: 2.0 (SSOT)
+**最后更新**: 2025-11-25
+**状态**: ✅ 已验证
 
 ---
 
-## 部署架构概述
+## 概述
 
-按照Plan 1的实施步骤，Chairman Agent MVP由以下服务组成：
+本文档是Chairman Agent项目的**单一事实来源（SSOT）**部署指南，涵盖：
+- 基础服务部署
+- Open-Notebook部署
+- OCR功能部署
+- 前端代码更新
+
+---
+
+## 1. 部署架构
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -28,181 +36,308 @@
    └────┬──────────┬──────────┬──┘
         │          │          │
    ┌────▼──┐  ┌───▼──┐  ┌───▼───┐
-   │OpenCanvas
-   │改造    │  │OpenD R
-   │改造    │  │SurrealDB│
+   │OpenCanvas    │OpenDR    │SurrealDB│
    └────────┘  └────────┘  └───────┘
 ```
 
-## 环境要求
-
-- **操作系统**: Linux/macOS/Windows with Docker
-- **Docker**: >= 20.10
-- **Docker Compose**: >= 2.0
-- **内存**: 最少 8GB（推荐 16GB）
-- **磁盘空间**: 最少 20GB（用于容器镜像和数据）
-
-## 部署步骤
-
-### Day 1: 启动基础设施
-
-#### 1.1 创建环境文件
-
-```bash
-cp .env.example .env
-```
-
-编辑 `.env` 文件，设置必要的API密钥：
-
-```bash
-# 必须配置
-OPENROUTER_API_KEY=your_api_key_here
-
-# 可选配置
-NOTEBOOK_API_KEY=
-```
-
-#### 1.2 创建数据目录
-
-```bash
-mkdir -p data/{surreal,notebook,redis,etcd,minio,milvus,api}
-chmod 755 data/*
-```
-
-#### 1.3 启动SurrealDB（Open-Notebook的数据库）
-
-```bash
-docker-compose up -d surreal
-```
-
-验证SurrealDB就绪：
-
-```bash
-curl -s http://localhost:8000/health
-# 应返回 "ok"
-```
-
-#### 1.4 启动其他基础服务
-
-```bash
-# 启动所有基础设施（Milvus, Etcd, MinIO, Redis）
-docker-compose up -d etcd minio milvus redis
-```
-
-等待所有服务健康检查通过（约2-3分钟）：
-
-```bash
-docker-compose ps
-# 所有服务应该显示 "healthy" 或 "running"
-```
-
-#### 1.5 启动Open-Notebook
-
-```bash
-docker-compose up -d open_notebook
-```
-
-验证Open-Notebook API可用：
-
-```bash
-curl -s http://localhost:5055/api/config
-# 应返回 JSON 配置信息
-```
-
-访问Open-Notebook UI：
-- 前端UI: http://localhost:8502
-- API文档: http://localhost:5055/api/docs
-
-### Day 2: OpenCanvas部署准备
-
-本阶段需要为OpenCanvas改造做准备。OpenCanvas将作为独立的LangGraph服务或集成到Chairman API中。
-
-**暂时跳过**（在Week 2执行改造）
-
-### Day 3-4: OpenDeepResearch部署准备
-
-类似OpenCanvas，需要在本阶段准备环境。
-
-**暂时跳过**（在Week 2执行改造）
-
-### Day 5: Chairman API网关启动
-
-#### 5.1 验证Dockerfile
-
-检查项目根目录的Dockerfile是否存在：
-
-```bash
-ls -l Dockerfile
-```
-
-#### 5.2 启动Chairman API网关
-
-```bash
-docker-compose up -d chairman_api
-```
-
-等待构建和启动（首次构建约5-10分钟）：
-
-```bash
-docker-compose logs -f chairman_api
-```
-
-验证API网关就绪：
-
-```bash
-curl -s http://localhost:8001/health
-```
-
-## 访问地址汇总
+### 服务端口汇总
 
 | 服务 | 地址 | 说明 |
 |------|------|------|
 | **Open-Notebook UI** | http://localhost:8502 | 知识库Web界面 |
 | **Open-Notebook API** | http://localhost:5055/api | 知识库REST API |
 | **Chairman API网关** | http://localhost:8001 | Chairman统一API入口 |
-| **SurrealDB** | ws://localhost:8000/rpc | 数据库WebSocket连接 |
+| **SurrealDB HTTP** | http://localhost:8000 | 数据库HTTP接口 |
+| **SurrealDB WebSocket** | ws://localhost:8000/rpc | 数据库WebSocket连接 |
 | **Milvus** | http://localhost:19530 | 向量数据库 |
-| **Redis** | http://localhost:6379 | 缓存存储 |
+| **Redis** | redis://localhost:6379 | 缓存存储 |
 
-## 故障排查
+---
 
-### SurrealDB无法连接
+## 2. 环境要求
+
+- **Docker**: >= 20.10
+- **Docker Compose**: >= 2.0
+- **内存**: 最少 8GB（推荐 16GB）
+- **磁盘**: 最少 20GB
+
+---
+
+## 3. 基础服务部署
+
+### 3.1 创建环境文件
+
+```bash
+cp .env.example .env
+# 编辑 .env，配置 OPENROUTER_API_KEY
+```
+
+### 3.2 创建数据目录
+
+```bash
+mkdir -p data/{surreal,notebook,redis,etcd,minio,milvus,api}
+chmod 755 data/*
+```
+
+### 3.3 启动服务
+
+```bash
+# 启动所有服务
+docker compose up -d
+
+# 验证服务状态
+docker compose ps
+```
+
+### 3.4 验证部署
+
+```bash
+# 检查Open-Notebook API
+curl -s http://localhost:5055/api/config
+
+# 检查SurrealDB
+curl -s http://localhost:8000/health
+```
+
+---
+
+## 4. OCR功能部署
+
+### 4.1 核心发现（已验证）
+
+| 项目 | 结果 | 说明 |
+|------|------|------|
+| 官方镜像OCR依赖 | ✅ 已包含 | PaddleOCR、libgl等已安装 |
+| 前端Volume Mount | ✅ 有效 | 本地修改自动同步 |
+| 后端Volume Mount | ❌ 未配置 | 需使用docker cp |
+| 扩展镜像需求 | ❌ 不需要 | 官方镜像足够 |
+
+### 4.2 部署方法：docker cp（推荐）
+
+```bash
+# Step 1: 复制OCR工具文件
+docker cp thirdparty/open-notebook/open_notebook/utils/pdf_ocr_utils.py \
+  chairman_open_notebook:/app/open_notebook/utils/pdf_ocr_utils.py
+
+# Step 2: 复制修改过的source.py
+docker cp thirdparty/open-notebook/open_notebook/graphs/source.py \
+  chairman_open_notebook:/app/open_notebook/graphs/source.py
+
+# Step 3: 重启容器
+docker compose restart open_notebook
+
+# Step 4: 验证
+docker exec chairman_open_notebook ls -la /app/open_notebook/utils/pdf_ocr_utils.py
+```
+
+### 4.3 验证OCR功能
+
+```bash
+# 验证模块导入
+docker exec chairman_open_notebook /app/.venv/bin/python3 -c \
+  "from open_notebook.utils.pdf_ocr_utils import process_pdf_with_ocr_fallback; print('OK')"
+
+# 验证PaddleOCR
+docker exec chairman_open_notebook /app/.venv/bin/python3 -c \
+  "from paddleocr import PaddleOCR; print('PaddleOCR OK')"
+```
+
+### 4.4 自动化部署脚本
+
+使用 `scripts/deploy_ocr.sh`：
+
+```bash
+chmod +x scripts/deploy_ocr.sh
+./scripts/deploy_ocr.sh
+```
+
+### 4.5 OCR依赖清单
+
+**系统依赖** (官方镜像已包含):
+- libgl1-mesa-glx (OpenCV核心依赖)
+- libglib2.0-0 (GLib库)
+
+**Python依赖** (官方镜像已包含):
+| 包名 | 版本 | 用途 |
+|------|------|------|
+| paddlepaddle | 2.6.0+ | 深度学习框架 |
+| paddleocr | 2.8.0+ | OCR识别引擎 |
+| PyMuPDF | 1.24.0+ | PDF解析 |
+| Pillow | 10.0.0+ | 图像处理 |
+
+**OCR模型** (自动缓存于 `/root/.paddlex/`):
+- 检测模型: ~70MB
+- 识别模型: ~100MB
+- 方向分类模型: ~40MB
+
+---
+
+## 5. 部署策略对比
+
+### 5.1 四种部署方案
+
+| 方案 | 适用场景 | 速度 | 持久性 | 推荐度 |
+|------|----------|------|--------|--------|
+| **A. 热更新** | 纯代码修改（前端/后端逻辑） | ⚡⚡⚡⚡⚡ <1分钟 | 中 | ⭐⭐⭐⭐⭐ |
+| **B. 运行时安装** | 快速验证新依赖 | ⚡⚡⚡⚡ 10-15分钟 | 低 | ⭐⭐⭐ |
+| **C. 扩展镜像** | 生产环境、依赖变更 | ⚡⚡⚡ 10-15分钟 | 高 | ⭐⭐⭐⭐⭐ |
+| **D. 离线依赖包** | 完全离线环境 | ⚡⚡ 30+分钟 | 低 | ⭐ |
+
+### 5.2 决策流程
+
+```
+需要修改什么？
+├─ 前端代码/样式/文案 → 方案A（热更新）
+├─ 后端Python业务逻辑 → 方案A（热更新）
+├─ 需要新的Python包 → 方案C（扩展镜像）
+├─ 需要新的系统包 → 方案C（扩展镜像）
+└─ 快速一次性验证 → 方案B（运行时安装）
+```
+
+### 5.3 分层思维
+
+```
+┌─────────────────────────────────────────────────────┐
+│  🏗️ 基础设施层（偶尔变更）                          │
+│  ├── 系统依赖变更          → 方案C: 扩展镜像        │
+│  └── Python包更新          → 方案C: 扩展镜像        │
+│                              ↓                      │
+│                       提供基础环境                   │
+│                              ↓                      │
+│  ⚡ 开发迭代层（频繁变更）                          │
+│  ├── 前端UI修改            → 方案A: 热更新          │
+│  ├── 后端业务逻辑          → 方案A: 热更新          │
+│  └── 配置文件修改          → 方案A: 热更新          │
+└─────────────────────────────────────────────────────┘
+```
+
+**结论**: 99%的日常开发使用热更新，仅依赖变更时重建镜像。
+
+---
+
+## 6. 前端代码更新
+
+### 6.1 方案选择
+
+| 方案 | 适用场景 | 时间 |
+|------|----------|------|
+| Volume Mount (已配置) | 前端代码修改 | 即时同步 |
+| docker cp + build | 需要重新构建 | ~1分钟 |
+| 重建镜像 | 依赖变更 | 5-15分钟 |
+
+### 6.2 热更新流程（推荐）
+
+由于前端已配置Volume Mount，本地修改会自动同步到容器：
+
+```bash
+# 1. 修改本地前端代码
+# thirdparty/open-notebook/frontend/src/...
+
+# 2. 容器内构建
+docker exec chairman_open_notebook sh -c "cd /app/frontend && npm run build"
+
+# 3. 重启容器
+docker compose restart open_notebook
+
+# 4. 验证
+# 访问 http://localhost:8502
+```
+
+### 6.3 验证Volume Mount
+
+```bash
+# 创建测试文件
+echo "TEST_$(date +%s)" > thirdparty/open-notebook/frontend/TEST.txt
+
+# 检查容器内是否同步
+docker exec chairman_open_notebook cat /app/frontend/TEST.txt
+
+# 清理
+rm thirdparty/open-notebook/frontend/TEST.txt
+```
+
+---
+
+## 7. 服务管理
+
+### 7.1 常用命令
+
+```bash
+# 查看服务状态
+docker compose ps
+
+# 查看日志
+docker compose logs -f open_notebook
+
+# 重启服务
+docker compose restart open_notebook
+
+# 进入容器
+docker exec -it chairman_open_notebook sh
+```
+
+### 7.2 Supervisord服务
+
+容器内使用supervisord管理以下服务：
+- `api` - 后端API服务
+- `worker` - 后台任务处理
+- `frontend` - Next.js前端
+- `surrealdb` - 内嵌数据库（可选）
+
+```bash
+# 查看服务状态
+docker exec chairman_open_notebook supervisorctl status
+
+# 重启单个服务
+docker exec chairman_open_notebook supervisorctl restart api
+```
+
+---
+
+## 8. 常见问题
+
+### Q1: 容器重建后OCR失效
+
+**解决**: 重新执行部署脚本
+```bash
+./scripts/deploy_ocr.sh
+```
+
+### Q2: 前端修改不生效
+
+**检查步骤**:
+1. 确认Volume Mount有效
+2. 执行 `npm run build`
+3. 重启容器
+4. 清除浏览器缓存
+
+### Q3: OCR处理很慢
+
+**优化建议**:
+- 当前配置: DPI=72（已优化）
+- 预期速度: ~5秒/页
+- 如需更快，可降低DPI到60
+
+### Q4: SurrealDB连接失败
 
 ```bash
 docker logs chairman_surreal
-docker-compose restart surreal
+docker compose restart surreal
 ```
 
-### Open-Notebook启动失败
+---
 
-检查日志：
+## 9. 参考资源
 
-```bash
-docker logs chairman_open_notebook
-```
+| 文档 | 路径 |
+|------|------|
+| 项目概述 | `/CLAUDE.md` |
+| MVP规划 | `/docs/planning/MVP-IMPLEMENTATION-PLAN.md` |
+| 详细设计 | `/docs/planning/INTEGRATION_PLAN_DETAILED.md` |
+| 问题排查 | `/docs/implementation/TROUBLESHOOTING.md` |
+| 源码分析 | `/docs/reference/DEEP_ANALYSIS_SUMMARY.md` |
 
-常见问题：
-- SurrealDB未就绪：等待SurrealDB启动
-- OPENROUTER_API_KEY未配置：检查.env文件
-- 端口被占用：修改docker-compose.yml中的端口映射
+---
 
-### Chairman API无法连接到Open-Notebook
-
-检查网络连接：
-
-```bash
-docker-compose exec chairman_api curl http://open_notebook:5055/api/config
-```
-
-## 下一步
-
-- Week 2: 开始OpenCanvas和OpenDeepResearch的改造
-- Week 3: 集成开发和测试
-- Week 4-5: 前端开发和集成测试
-- Week 6: 性能优化和上线准备
-
-## 参考资源
-
-- Plan 1完整方案: [INTEGRATION_PLAN_DETAILED.md](INTEGRATION_PLAN_DETAILED.md)
-- 深度分析总结: [DEEP_ANALYSIS_SUMMARY.md](DEEP_ANALYSIS_SUMMARY.md)
-- Open-Notebook官方文档: [thirdparty/open-notebook/README.md](thirdparty/open-notebook/README.md)
+**文档维护者**: Claude Code
+**验证状态**: ✅ 已通过实际测试验证

@@ -34,7 +34,7 @@
 | **改造文件** | 未确定 | 精确到文件名和行号（8个关键文件） |
 | **实施指导** | 高层概述 | 代码级改造步骤（30+具体步骤） |
 
-**核心更新**：详见 [INTEGRATION_PLAN_DETAILED.md](../integration/INTEGRATION_PLAN_DETAILED.md)（8000+行）和 [DEEP_ANALYSIS_SUMMARY.md](../integration/DEEP_ANALYSIS_SUMMARY.md)
+**核心更新**：详见 [INTEGRATION_PLAN_DETAILED.md](./INTEGRATION_PLAN_DETAILED.md)（8000+行）和 [DEEP_ANALYSIS_SUMMARY.md](../reference/DEEP_ANALYSIS_SUMMARY.md)
 
 ---
 
