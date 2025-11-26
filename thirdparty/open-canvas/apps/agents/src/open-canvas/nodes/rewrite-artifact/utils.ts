@@ -10,10 +10,32 @@ import {
 import {
   OPTIONALLY_UPDATE_META_PROMPT,
   UPDATE_ENTIRE_ARTIFACT_PROMPT,
+  UPDATE_DIGITAL_REPORT_PROMPT,
+  getReportTemplateInstructions,
 } from "../../prompts.js";
 import { OpenCanvasGraphAnnotation } from "../../state.js";
 import { z } from "zod";
 import { OPTIONALLY_UPDATE_ARTIFACT_META_SCHEMA } from "./schemas.js";
+
+/**
+ * 从 artifact 内容中提取数字化报告模板 ID
+ * 模板 ID 以 HTML 注释形式嵌入: <!-- DIGITAL_REPORT_TEMPLATE: xxx -->
+ */
+export const extractReportTemplateId = (
+  artifactContent: string
+): string | null => {
+  const match = artifactContent.match(
+    /<!--\s*DIGITAL_REPORT_TEMPLATE:\s*(\S+)\s*-->/
+  );
+  return match ? match[1] : null;
+};
+
+/**
+ * 检查 artifact 是否为数字化报告
+ */
+export const isDigitalReport = (artifactContent: string): boolean => {
+  return extractReportTemplateId(artifactContent) !== null;
+};
 
 export const validateState = (
   state: typeof OpenCanvasGraphAnnotation.State
@@ -56,12 +78,35 @@ interface BuildPromptArgs {
   artifactMetaToolCall: z.infer<typeof OPTIONALLY_UPDATE_ARTIFACT_META_SCHEMA>;
 }
 
+/**
+ * 构建数字化报告更新 Prompt
+ */
+const buildDigitalReportPrompt = (
+  artifactContent: string,
+  templateId: string
+): string => {
+  const templateInstructions = getReportTemplateInstructions(templateId);
+
+  return UPDATE_DIGITAL_REPORT_PROMPT.replace(
+    "{artifactContent}",
+    artifactContent
+  ).replace("{templateInstructions}", templateInstructions);
+};
+
 export const buildPrompt = ({
   artifactContent,
   memoriesAsString,
   isNewType,
   artifactMetaToolCall,
 }: BuildPromptArgs) => {
+  // 检查是否为数字化报告
+  const reportTemplateId = extractReportTemplateId(artifactContent);
+  if (reportTemplateId) {
+    // 使用数字化报告专用 Prompt
+    return buildDigitalReportPrompt(artifactContent, reportTemplateId);
+  }
+
+  // 普通 artifact 更新逻辑
   const metaPrompt = isNewType ? buildMetaPrompt(artifactMetaToolCall) : "";
 
   return UPDATE_ENTIRE_ARTIFACT_PROMPT.replace(

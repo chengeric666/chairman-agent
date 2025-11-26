@@ -56,18 +56,55 @@ function PreviewToggle({
 
 // HTML预览组件 - 使用sandbox iframe安全渲染
 function HtmlPreview({ code }: { code: string }) {
-  // 先使用 cleanContent 处理换行符(\n -> 真实换行)和HTML实体解码
-  // 然后清理可能的markdown代码块标记
-  const cleanHtmlCode = cleanContent(code)
-    .replace(/^```html\n?/i, '')
-    .replace(/^```\n?/, '')
-    .replace(/\n?```$/g, '')
+  // 清理HTML代码 - 移除可能的markdown代码块标记
+  const cleanHtmlCode = code
+    .replace(/^[\s]*```+\s*html\s*\n?/i, '')
+    .replace(/^[\s]*```+\s*\n?/i, '')
+    .replace(/\n?[\s]*```+[\s]*$/g, '')
     .trim();
+
+  // CSS 注入：修复模板布局错误 + 限制 canvas 高度
+  const minimalCSS = `<style>
+/* 修复模板双重边距错误：flex 布局下不需要额外的 ml-64 */
+@media (min-width: 1024px) {
+  .lg\\:ml-64 { margin-left: 0 !important; }
+}
+/* 限制 canvas 高度，防止 Chart.js 无限拉伸 */
+canvas { max-height: 400px !important; }
+</style>`;
+
+  // 锚点拦截脚本：防止 # 链接影响父页面
+  const anchorFixScript = `<script>
+document.addEventListener('click', function(e) {
+  var a = e.target.closest('a');
+  if (a && a.getAttribute('href') && a.getAttribute('href').startsWith('#')) {
+    e.preventDefault();
+    var id = a.getAttribute('href').substring(1);
+    var el = document.getElementById(id) || document.querySelector('[name="' + id + '"]');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }
+}, true);
+</script>`;
+
+  // 注入 CSS 和脚本
+  let finalHtml = cleanHtmlCode;
+
+  if (finalHtml.includes('</head>')) {
+    finalHtml = finalHtml.replace('</head>', minimalCSS + '</head>');
+  } else {
+    finalHtml = minimalCSS + finalHtml;
+  }
+
+  if (finalHtml.includes('</body>')) {
+    finalHtml = finalHtml.replace('</body>', anchorFixScript + '</body>');
+  } else {
+    finalHtml = finalHtml + anchorFixScript;
+  }
 
   return (
     <div className="w-full h-full bg-white rounded-lg overflow-hidden">
       <iframe
-        srcDoc={cleanHtmlCode}
+        srcDoc={finalHtml}
         className="w-full h-[800px] border-0"
         sandbox="allow-scripts allow-same-origin"
         title="HTML预览"

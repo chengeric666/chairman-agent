@@ -1,11 +1,13 @@
 import { ProgrammingLanguageOptions } from "@opencanvas/shared/types";
 import { ThreadPrimitive, useThreadRuntime } from "@assistant-ui/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FC, useMemo } from "react";
+import { FC, useMemo, useState } from "react";
 import { TighterText } from "../ui/header";
-import { NotebookPen } from "lucide-react";
+import { NotebookPen, FileBarChart } from "lucide-react";
 import { ProgrammingLanguagesDropdown } from "../ui/programming-lang-dropdown";
 import { Button } from "../ui/button";
+import { ReportTemplateDialog } from "../report/ReportTemplateDialog";
+import { ReportTemplateId } from "@/lib/report-templates";
 
 const QUICK_START_PROMPTS_SEARCH = [
   "分析2025年人工智能芯片制造商的市场情况",
@@ -44,7 +46,8 @@ function getRandomPrompts(prompts: string[], count: number = 4): string[] {
 interface QuickStartButtonsProps {
   handleQuickStart: (
     type: "text" | "code",
-    language?: ProgrammingLanguageOptions
+    language?: ProgrammingLanguageOptions,
+    reportTemplate?: ReportTemplateId
   ) => void;
   composer: React.ReactNode;
   searchEnabled: boolean;
@@ -93,22 +96,36 @@ const QuickStartPrompts = ({ searchEnabled }: QuickStartPromptsProps) => {
 };
 
 const QuickStartButtons = (props: QuickStartButtonsProps) => {
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+
   const handleLanguageSubmit = (language: ProgrammingLanguageOptions) => {
     props.handleQuickStart("code", language);
+  };
+
+  const handleReportTemplateSelect = (templateId: ReportTemplateId) => {
+    props.handleQuickStart("code", "html", templateId);
   };
 
   return (
     <div className="flex flex-col gap-8 items-center justify-center w-full">
       <div className="flex flex-col gap-6">
         <p className="text-gray-600 text-sm">从空白画布开始</p>
-        <div className="flex flex-row gap-1 items-center justify-center w-full">
+        <div className="flex flex-row gap-2 items-center justify-center w-full flex-wrap">
           <Button
             variant="outline"
-            className="text-gray-500 hover:text-gray-700 transition-colors ease-in rounded-2xl flex items-center justify-center gap-2 w-[250px] h-[64px]"
+            className="text-gray-500 hover:text-gray-700 transition-colors ease-in rounded-2xl flex items-center justify-center gap-2 w-[180px] h-[64px]"
             onClick={() => props.handleQuickStart("text")}
           >
             新建文章
-            <NotebookPen />
+            <NotebookPen className="w-5 h-5" />
+          </Button>
+          <Button
+            variant="outline"
+            className="text-blue-500 hover:text-blue-700 border-blue-200 hover:border-blue-400 transition-colors ease-in rounded-2xl flex items-center justify-center gap-2 w-[180px] h-[64px]"
+            onClick={() => setReportDialogOpen(true)}
+          >
+            数字化报告
+            <FileBarChart className="w-5 h-5" />
           </Button>
           <ProgrammingLanguagesDropdown handleSubmit={handleLanguageSubmit} />
         </div>
@@ -118,6 +135,13 @@ const QuickStartButtons = (props: QuickStartButtonsProps) => {
         {props.composer}
         <QuickStartPrompts searchEnabled={props.searchEnabled} />
       </div>
+
+      {/* 报告模板选择对话框 */}
+      <ReportTemplateDialog
+        open={reportDialogOpen}
+        onClose={() => setReportDialogOpen(false)}
+        onSelectTemplate={handleReportTemplateSelect}
+      />
     </div>
   );
 };

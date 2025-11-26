@@ -220,6 +220,12 @@ export function GraphProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Skip if streaming is in progress to avoid race conditions
+    // This prevents the artifact from being reset when a new thread is created during streaming
+    if (isStreaming) {
+      return;
+    }
+
     // Only run effect once in development
     if (searchOrCreateEffectRan.current) {
       return;
@@ -235,7 +241,7 @@ export function GraphProvider({ children }: { children: ReactNode }) {
       // Failed to fetch thread. Remove from query params
       threadData.setThreadId(null);
     });
-  }, [threadData.threadId, userData.user]);
+  }, [threadData.threadId, userData.user, isStreaming]);
 
   const updateArtifact = async (
     artifactToUpdate: ArtifactV3,
@@ -358,6 +364,8 @@ export function GraphProvider({ children }: { children: ReactNode }) {
       });
 
       // Variables to keep track of content specific to this stream
+      // Capture artifact at stream start to handle race conditions where state might be reset
+      const capturedArtifact = artifact;
       const prevCurrentContent = artifact
         ? artifact.contents.find((a) => a.index === artifact.currentIndex)
         : undefined;
@@ -574,11 +582,14 @@ export function GraphProvider({ children }: { children: ReactNode }) {
               const firstUpdateCopy = isFirstUpdate;
               setFirstTokenReceived(true);
               setArtifact((prev) => {
-                if (!prev) {
-                  throw new Error("No artifact found when updating markdown");
+                // Use captured artifact as fallback if state was reset due to race condition
+                const effectivePrev = prev || capturedArtifact;
+                if (!effectivePrev) {
+                  console.error("No artifact found when updating markdown");
+                  return prev;
                 }
                 return updateHighlightedMarkdown(
-                  prev,
+                  effectivePrev,
                   `${updatedArtifactStartContent}${updatedArtifactRestContent}`,
                   newArtifactIndex,
                   prevCurrentContent,
@@ -651,14 +662,17 @@ export function GraphProvider({ children }: { children: ReactNode }) {
               const firstUpdateCopy = isFirstUpdate;
               setFirstTokenReceived(true);
               setArtifact((prev) => {
-                if (!prev) {
-                  throw new Error("No artifact found when updating markdown");
+                // Use captured artifact as fallback if state was reset due to race condition
+                const effectivePrev = prev || capturedArtifact;
+                if (!effectivePrev) {
+                  console.error("No artifact found when updating code");
+                  return prev;
                 }
                 const content = removeCodeBlockFormatting(
                   `${updatedArtifactStartContent}${updatedArtifactRestContent}`
                 );
                 return updateHighlightedCode(
-                  prev,
+                  effectivePrev,
                   content,
                   newArtifactIndex,
                   prevCurrentContent,
@@ -722,8 +736,11 @@ export function GraphProvider({ children }: { children: ReactNode }) {
               const firstUpdateCopy = isFirstUpdate;
               setFirstTokenReceived(true);
               setArtifact((prev) => {
-                if (!prev) {
-                  throw new Error("No artifact found when updating markdown");
+                // Use captured artifact as fallback if state was reset due to race condition
+                const effectivePrev = prev || capturedArtifact;
+                if (!effectivePrev) {
+                  console.error("No artifact found when updating markdown");
+                  return prev;
                 }
 
                 let content = newArtifactContent;
@@ -731,14 +748,14 @@ export function GraphProvider({ children }: { children: ReactNode }) {
                   console.error(
                     "No rewrite artifact meta found when updating artifact"
                   );
-                  return prev;
+                  return effectivePrev;
                 }
                 if (rewriteArtifactMeta.type === "code") {
                   content = removeCodeBlockFormatting(content);
                 }
 
                 return updateRewrittenArtifact({
-                  prevArtifact: prev,
+                  prevArtifact: effectivePrev,
                   newArtifactContent: content,
                   rewriteArtifactMeta: rewriteArtifactMeta,
                   prevCurrentContent,
@@ -814,8 +831,11 @@ export function GraphProvider({ children }: { children: ReactNode }) {
               const firstUpdateCopy = isFirstUpdate;
               setFirstTokenReceived(true);
               setArtifact((prev) => {
-                if (!prev) {
-                  throw new Error("No artifact found when updating markdown");
+                // Use captured artifact as fallback if state was reset due to race condition
+                const effectivePrev = prev || capturedArtifact;
+                if (!effectivePrev) {
+                  console.error("No artifact found when updating (non-streaming model)");
+                  return prev;
                 }
 
                 let content = newArtifactContent;
@@ -824,7 +844,7 @@ export function GraphProvider({ children }: { children: ReactNode }) {
                 }
 
                 return updateRewrittenArtifact({
-                  prevArtifact: prev ?? artifact,
+                  prevArtifact: effectivePrev,
                   newArtifactContent: content,
                   rewriteArtifactMeta: {
                     type: artifactType,
@@ -885,8 +905,11 @@ export function GraphProvider({ children }: { children: ReactNode }) {
               const firstUpdateCopy = isFirstUpdate;
               setFirstTokenReceived(true);
               setArtifact((prev) => {
-                if (!prev) {
-                  throw new Error("No artifact found when updating markdown");
+                // Use captured artifact as fallback if state was reset due to race condition
+                const effectivePrev = prev || capturedArtifact;
+                if (!effectivePrev) {
+                  console.error("No artifact found when updating theme");
+                  return prev;
                 }
 
                 let content = fullNewArtifactContent;
@@ -894,14 +917,14 @@ export function GraphProvider({ children }: { children: ReactNode }) {
                   console.error(
                     "No rewrite artifact meta found when updating artifact"
                   );
-                  return prev;
+                  return effectivePrev;
                 }
                 if (rewriteArtifactMeta.type === "code") {
                   content = removeCodeBlockFormatting(content);
                 }
 
                 return updateRewrittenArtifact({
-                  prevArtifact: prev,
+                  prevArtifact: effectivePrev,
                   newArtifactContent: content,
                   rewriteArtifactMeta: rewriteArtifactMeta,
                   prevCurrentContent,
@@ -990,11 +1013,14 @@ export function GraphProvider({ children }: { children: ReactNode }) {
               const firstUpdateCopy = isFirstUpdate;
               setFirstTokenReceived(true);
               setArtifact((prev) => {
-                if (!prev) {
-                  throw new Error("No artifact found when updating markdown");
+                // Use captured artifact as fallback if state was reset due to race condition
+                const effectivePrev = prev || capturedArtifact;
+                if (!effectivePrev) {
+                  console.error("No artifact found when updating highlighted markdown (non-streaming)");
+                  return prev;
                 }
                 return updateHighlightedMarkdown(
-                  prev,
+                  effectivePrev,
                   `${updatedArtifactStartContent}${updatedArtifactRestContent}`,
                   newArtifactIndex,
                   prevCurrentContent,
@@ -1070,14 +1096,17 @@ export function GraphProvider({ children }: { children: ReactNode }) {
               const firstUpdateCopy = isFirstUpdate;
               setFirstTokenReceived(true);
               setArtifact((prev) => {
-                if (!prev) {
-                  throw new Error("No artifact found when updating markdown");
+                // Use captured artifact as fallback if state was reset due to race condition
+                const effectivePrev = prev || capturedArtifact;
+                if (!effectivePrev) {
+                  console.error("No artifact found when updating code (non-streaming)");
+                  return prev;
                 }
                 const content = removeCodeBlockFormatting(
                   `${updatedArtifactStartContent}${updatedArtifactRestContent}`
                 );
                 return updateHighlightedCode(
-                  prev,
+                  effectivePrev,
                   content,
                   newArtifactIndex,
                   prevCurrentContent,
@@ -1137,8 +1166,11 @@ export function GraphProvider({ children }: { children: ReactNode }) {
               const firstUpdateCopy = isFirstUpdate;
               setFirstTokenReceived(true);
               setArtifact((prev) => {
-                if (!prev) {
-                  throw new Error("No artifact found when updating markdown");
+                // Use captured artifact as fallback if state was reset due to race condition
+                const effectivePrev = prev || capturedArtifact;
+                if (!effectivePrev) {
+                  console.error("No artifact found when updating theme (non-streaming)");
+                  return prev;
                 }
 
                 let content = fullNewArtifactContent;
@@ -1147,7 +1179,7 @@ export function GraphProvider({ children }: { children: ReactNode }) {
                 }
 
                 return updateRewrittenArtifact({
-                  prevArtifact: prev ?? artifact,
+                  prevArtifact: effectivePrev,
                   newArtifactContent: content,
                   rewriteArtifactMeta: {
                     type: artifactType,

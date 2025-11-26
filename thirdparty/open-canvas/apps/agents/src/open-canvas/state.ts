@@ -133,6 +133,12 @@ export const OpenCanvasGraphAnnotation = Annotation.Root({
    * The search results to include in context.
    */
   webSearchResults: Annotation<SearchResult[] | undefined>,
+  /**
+   * The ID of the digital report template being used.
+   * When set, indicates the user is creating a professional digital report.
+   * Possible values: "strategic-insight" | "business-narrative" | "knowledge-system" | "profile-insight" | "consulting-analysis" | "ai-custom"
+   */
+  reportTemplateId: Annotation<string | undefined>,
 });
 
 export type OpenCanvasGraphReturnType = Partial<

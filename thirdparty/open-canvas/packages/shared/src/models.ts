@@ -480,8 +480,10 @@ const OPENROUTER_MODELS: ModelConfigurationParams[] = [
       maxTokens: {
         min: 1,
         max: 131_072,
-        default: 4_096,
-        current: 4_096,
+        // 增加默认值以支持完整的数字化报告生成
+        // HTML报告通常需要 10K-30K tokens，使用 32K 确保完整性
+        default: 32_768,
+        current: 32_768,
       },
     },
     isNew: true,

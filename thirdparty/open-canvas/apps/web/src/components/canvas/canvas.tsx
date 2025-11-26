@@ -18,6 +18,7 @@ import {
   ProgrammingLanguageOptions,
 } from "@opencanvas/shared/types";
 import React, { useEffect, useState } from "react";
+import { ReportTemplateId, getReportInitialTemplate } from "@/lib/report-templates";
 import { ContentComposerChatInterface } from "./content-composer";
 import NoSSRWrapper from "../NoSSRWrapper";
 import { useThreadContext } from "@/contexts/ThreadProvider";
@@ -56,7 +57,8 @@ export function CanvasComponent() {
 
   const handleQuickStart = (
     type: "text" | "code",
-    language?: ProgrammingLanguageOptions
+    language?: ProgrammingLanguageOptions,
+    reportTemplate?: ReportTemplateId
   ) => {
     if (type === "code" && !language) {
       toast({
@@ -69,7 +71,17 @@ export function CanvasComponent() {
     setChatStarted(true);
 
     let artifactContent: ArtifactCodeV3 | ArtifactMarkdownV3;
-    if (type === "code" && language) {
+
+    // 数字化报告模式：使用 HTML 语言 + 报告初始模板
+    if (type === "code" && language === "html" && reportTemplate) {
+      artifactContent = {
+        index: 1,
+        type: "code",
+        title: "数字化报告",
+        code: getReportInitialTemplate(reportTemplate),
+        language: "html",
+      };
+    } else if (type === "code" && language) {
       artifactContent = {
         index: 1,
         type: "code",
@@ -100,46 +112,53 @@ export function CanvasComponent() {
   return (
     <ResizablePanelGroup direction="horizontal" className="h-screen">
       {!chatStarted && (
-        <NoSSRWrapper>
-          <ContentComposerChatInterface
-            chatCollapsed={chatCollapsed}
-            setChatCollapsed={(c) => {
-              setChatCollapsed(c);
-              const queryParams = new URLSearchParams(searchParams.toString());
-              queryParams.set(CHAT_COLLAPSED_QUERY_PARAM, JSON.stringify(c));
-              router.replace(`?${queryParams.toString()}`, { scroll: false });
-            }}
-            switchSelectedThreadCallback={(thread) => {
-              // Chat should only be "started" if there are messages present
-              if ((thread.values as Record<string, any>)?.messages?.length) {
-                setChatStarted(true);
-                if (thread?.metadata?.customModelName) {
-                  setModelName(
-                    thread.metadata.customModelName as ALL_MODEL_NAMES
-                  );
-                } else {
-                  setModelName(DEFAULT_MODEL_NAME);
-                }
+        <ResizablePanel
+          defaultSize={100}
+          id="welcome-panel"
+          order={1}
+          className="h-screen"
+        >
+          <NoSSRWrapper>
+            <ContentComposerChatInterface
+              chatCollapsed={chatCollapsed}
+              setChatCollapsed={(c) => {
+                setChatCollapsed(c);
+                const queryParams = new URLSearchParams(searchParams.toString());
+                queryParams.set(CHAT_COLLAPSED_QUERY_PARAM, JSON.stringify(c));
+                router.replace(`?${queryParams.toString()}`, { scroll: false });
+              }}
+              switchSelectedThreadCallback={(thread) => {
+                // Chat should only be "started" if there are messages present
+                if ((thread.values as Record<string, any>)?.messages?.length) {
+                  setChatStarted(true);
+                  if (thread?.metadata?.customModelName) {
+                    setModelName(
+                      thread.metadata.customModelName as ALL_MODEL_NAMES
+                    );
+                  } else {
+                    setModelName(DEFAULT_MODEL_NAME);
+                  }
 
-                if (thread?.metadata?.modelConfig) {
-                  setModelConfig(
-                    (thread?.metadata?.customModelName ??
-                      DEFAULT_MODEL_NAME) as ALL_MODEL_NAMES,
-                    (thread.metadata?.modelConfig ??
-                      DEFAULT_MODEL_CONFIG) as CustomModelConfig
-                  );
+                  if (thread?.metadata?.modelConfig) {
+                    setModelConfig(
+                      (thread?.metadata?.customModelName ??
+                        DEFAULT_MODEL_NAME) as ALL_MODEL_NAMES,
+                      (thread.metadata?.modelConfig ??
+                        DEFAULT_MODEL_CONFIG) as CustomModelConfig
+                    );
+                  } else {
+                    setModelConfig(DEFAULT_MODEL_NAME, DEFAULT_MODEL_CONFIG);
+                  }
                 } else {
-                  setModelConfig(DEFAULT_MODEL_NAME, DEFAULT_MODEL_CONFIG);
+                  setChatStarted(false);
                 }
-              } else {
-                setChatStarted(false);
-              }
-            }}
-            setChatStarted={setChatStarted}
-            hasChatStarted={chatStarted}
-            handleQuickStart={handleQuickStart}
-          />
-        </NoSSRWrapper>
+              }}
+              setChatStarted={setChatStarted}
+              hasChatStarted={chatStarted}
+              handleQuickStart={handleQuickStart}
+            />
+          </NoSSRWrapper>
+        </ResizablePanel>
       )}
       {!chatCollapsed && chatStarted && (
         <ResizablePanel

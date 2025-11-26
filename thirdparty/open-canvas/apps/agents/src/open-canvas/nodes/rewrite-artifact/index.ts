@@ -25,12 +25,19 @@ import {
   isThinkingModel,
 } from "@opencanvas/shared/utils/thinking";
 
+// 数字化报告需要的最大 tokens 数量（Grok 支持最大 131K，我们使用 32K 以确保完整生成）
+const DIGITAL_REPORT_MAX_TOKENS = 32_768;
+
 export const rewriteArtifact = async (
   state: typeof OpenCanvasGraphAnnotation.State,
   config: LangGraphRunnableConfig
 ): Promise<OpenCanvasGraphReturnType> => {
   const { modelName } = getModelConfig(config);
-  const smallModelWithConfig = (await getModelFromConfig(config)).withConfig({
+  // 强制使用较大的 maxTokens 以支持完整的数字化报告（HTML/代码）生成
+  // 这确保即使前端配置的 maxTokens 较小，报告也能完整生成
+  const smallModelWithConfig = (await getModelFromConfig(config, {
+    maxTokens: DIGITAL_REPORT_MAX_TOKENS,
+  })).withConfig({
     runName: "rewrite_artifact_model_call",
   });
   const memoriesAsString = await getFormattedReflections(config);
