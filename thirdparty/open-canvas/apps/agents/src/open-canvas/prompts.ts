@@ -1,5 +1,17 @@
 const DEFAULT_CODE_PROMPT_RULES = `- Do NOT include triple backticks when generating code. The code should be in plain text.`;
 
+// 语言自动检测和匹配规则
+const LANGUAGE_MATCHING_RULE = `
+<language-rule>
+IMPORTANT: Detect the language of the user's message and ALWAYS respond in the SAME language.
+- If the user writes in Chinese (中文), respond in Chinese.
+- If the user writes in English, respond in English.
+- If the user writes in Japanese (日本語), respond in Japanese.
+- For any other language, match the user's language.
+This rule applies to ALL responses including artifact content, follow-up messages, and any other generated text.
+</language-rule>
+`;
+
 const APP_CONTEXT = `
 <app-context>
 The name of the application is "Open Canvas". Open Canvas is a web application where users have a chat window and a canvas to display an artifact.
@@ -12,9 +24,9 @@ Even if the user goes from a 'text' artifact to a 'code' artifact.
 
 export const NEW_ARTIFACT_PROMPT = `You are an AI assistant tasked with generating a new artifact based on the users request.
 Ensure you use markdown syntax when appropriate, as the text you generate will be rendered in markdown.
-  
-Use the full chat history as context when generating the artifact.
 
+Use the full chat history as context when generating the artifact.
+${LANGUAGE_MATCHING_RULE}
 Follow these rules and guidelines:
 <rules-guidelines>
 - Do not wrap it in any XML tags you see in this prompt.
@@ -89,7 +101,7 @@ export const OPTIONALLY_UPDATE_META_PROMPT = `It has been pre-determined based o
 You should use this as context when generating your response.`;
 
 export const UPDATE_ENTIRE_ARTIFACT_PROMPT = `You are an AI assistant, and the user has requested you make an update to an artifact you generated in the past.
-
+${LANGUAGE_MATCHING_RULE}
 Here is the current content of the artifact:
 <artifact>
 {artifactContent}
@@ -256,6 +268,7 @@ If you have previously generated an artifact and the user asks a question that s
 
 export const FOLLOWUP_ARTIFACT_PROMPT = `You are an AI assistant tasked with generating a followup to the artifact the user just generated.
 The context is you're having a conversation with the user, and you've just generated an artifact for them. Now you should follow up with a message that notifies them you're done. Make this message creative!
+${LANGUAGE_MATCHING_RULE}
 
 I've provided some examples of what your followup might be, but please feel free to get creative here!
 
