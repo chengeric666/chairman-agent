@@ -56,8 +56,9 @@ function PreviewToggle({
 
 // HTML预览组件 - 使用sandbox iframe安全渲染
 function HtmlPreview({ code }: { code: string }) {
-  // 清理HTML代码 - 移除可能的markdown代码块标记
-  const cleanHtmlCode = code
+  // 先使用 cleanContent 处理换行符(\n -> 真实换行)和HTML实体解码
+  // 然后清理可能的markdown代码块标记
+  const cleanHtmlCode = cleanContent(code)
     .replace(/^```html\n?/i, '')
     .replace(/^```\n?/, '')
     .replace(/\n?```$/g, '')
