@@ -1,8 +1,10 @@
-# Open-Notebook 多用户改造方案
+# Open-Notebook 多用户改造方案（修订版）
+
+> **修订说明**: 本方案基于对 Open-Notebook 和 OpenCanvas 代码库的深度调研，所有技术决策均有代码事实支撑。
 
 ## 🎯 目标
 
-为 Open-Notebook 实现完整的多用户数据隔离，集成 NextAuth + Zitadel OIDC 认证。
+为 Open-Notebook 实现完整的多用户数据隔离，集成 Zitadel OIDC 认证。
 
 ---
 
@@ -17,116 +19,247 @@
 
 ---
 
-## 📊 现状分析
+## 📊 深度调研发现（基于代码事实）
 
-### 技术架构概览
+### 1. 当前架构的关键问题
 
-| 组件 | 技术栈 | 说明 |
-|------|--------|------|
-| **后端** | FastAPI (Python) | 17个路由文件，4816行代码 |
-| **前端** | Next.js 15 + Zustand | 认证状态存储在 LocalStorage |
-| **数据库** | SurrealDB | NoSQL + 关系特性，支持行级安全 |
-| **当前认证** | 单一密码 | 环境变量 `OPEN_NOTEBOOK_PASSWORD` |
+| 问题 | 代码位置 | 影响 | 优先级 |
+|------|----------|------|--------|
+| **聊天消息不持久化** | `api/routers/chat.py` 使用 LangGraph 内存状态 | 应用重启消息丢失 | 🔴 P0 |
+| **无数据库连接池** | `open_notebook/database/repository.py:db_connection()` | 高并发瓶颈 | 🟡 P1 |
+| **无用户隔离** | 所有 `repo_query` 调用无 WHERE owner_id | 数据泄露 | 🔴 P0 |
+| **搜索函数无用户过滤** | `migrations/4.surrealql` 中的 fn::text_search | 搜索泄露 | 🔴 P0 |
+| **密码明文存储** | `frontend/src/lib/stores/auth-store.ts` | 安全风险 | 🟡 P1 |
 
-### 需要用户过滤的路由（12个）
-
-| 路由文件 | 优先级 | 核心端点 |
-|---------|--------|----------|
-| `notebooks.py` | 🔴 高 | GET/POST/PUT/DELETE /notebooks |
-| `notes.py` | 🔴 高 | GET/POST/PUT/DELETE /notes |
-| `sources.py` | 🔴 高 | GET/POST /sources, /sources/upload |
-| `chat.py` | 🔴 高 | POST/GET /chat/sessions |
-| `source_chat.py` | 🔴 高 | POST /source-chat/sessions |
-| `search.py` | 🟡 中 | POST /search, /ask |
-| `transformations.py` | 🟡 中 | GET/POST /transformations |
-| `embedding.py` | 🟡 中 | POST /embedding/search |
-| `insights.py` | 🟡 中 | GET /insights |
-| `context.py` | 🟡 中 | GET /context |
-| `podcasts.py` | 🟡 中 | GET/POST /podcasts |
-| `embedding_rebuild.py` | 🟢 低 | POST /embeddings/rebuild |
-
-### 系统级路由（无需用户过滤）
-
-- `config.py` - 系统配置
-- `models.py` - 模型配置（全局共享）
-- `auth.py` - 认证状态
-- `settings.py` - 可选按用户分离
-
----
-
-## 🔧 技术方案
-
-### 改造策略：基类过滤 + 路由验证
-
-**方案 C（ORM级别）+ 方案 B（路由级别）组合**
+### 2. 数据流架构（验证后）
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      请求流程                                │
+│                      实际数据流                              │
 ├─────────────────────────────────────────────────────────────┤
-│  1. JWT 中间件 → 验证 token，提取 user_id                    │
-│  2. 依赖注入 → get_current_user() 返回用户对象               │
-│  3. 路由处理 → 传递 user_id 到业务逻辑                       │
-│  4. ObjectModel → 自动添加 WHERE owner_id=$user_id           │
-│  5. Repository → 创建时自动设置 owner_id                     │
+│                                                             │
+│  前端 (React + Zustand)                                     │
+│  ├─ auth-store.ts: token = 密码明文                         │
+│  ├─ API Client: Authorization: Bearer {密码}                │
+│  └─ React Query: 5分钟缓存                                  │
+│                                                             │
+│  API层 (FastAPI)                                            │
+│  ├─ PasswordAuthMiddleware: 对比 OPEN_NOTEBOOK_PASSWORD     │
+│  ├─ 路由: 直接调用 Domain 方法                              │
+│  └─ ⚠️ 无用户上下文注入                                     │
+│                                                             │
+│  Domain层 (ObjectModel)                                     │
+│  ├─ get_all(): SELECT * FROM table (无过滤!)                │
+│  ├─ get(id): SELECT * FROM $id (无权限检查!)                │
+│  └─ save(): repo_create/repo_update                         │
+│                                                             │
+│  Repository层                                               │
+│  ├─ db_connection(): 每次新建连接                           │
+│  ├─ repo_query(): 执行原始 SurrealQL                        │
+│  └─ ⚠️ 无连接池                                             │
+│                                                             │
+│  SurrealDB                                                  │
+│  ├─ 9个迁移文件，版本追踪在 _sbl_migrations                 │
+│  ├─ 所有表无 owner_id 字段                                  │
+│  └─ fn::text_search/vector_search 无用户过滤                │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 3. 聊天消息存储的真相
+
+**代码事实** (`api/routers/chat.py:execute_chat`):
+
+```python
+# 聊天消息存储在 LangGraph 内存状态中
+thread_state = chat_graph.get_state(
+    config=RunnableConfig(configurable={"thread_id": session_id})
+)
+messages = thread_state.values["messages"]
+
+# ⚠️ 应用重启后 messages 丢失！
+# ⚠️ chat_session 表只存储 id, title, model_override
+# ⚠️ 没有 chat_message 表！
+```
+
+**影响**:
+- Docker 容器重启 → 所有聊天历史丢失
+- 无法跨设备访问聊天历史
+- 无法按内容搜索历史消息
+
+### 4. 搜索函数分析
+
+**代码事实** (`migrations/4.surrealql`):
+
+```surrealql
+-- fn::text_search 没有 owner_id 参数！
+DEFINE FUNCTION fn::text_search(
+    $query_text: string,
+    $match_count: int,
+    $sources: bool,
+    $show_notes: bool
+) {
+    -- 搜索所有 source，无用户过滤
+    let $source_title_search = IF $sources {(
+        SELECT id, title, ... FROM source WHERE title @1@ $query_text
+        -- ⚠️ 缺少: AND owner_id = $user_id
+    )}
+    -- ...
+}
+```
+
+**需要修改**: 所有搜索函数都需要添加 `$user_id` 参数
+
+### 5. OpenCanvas 多用户实现（可借鉴）
+
+| 机制 | OpenCanvas 实现 | Open-Notebook 需要 |
+|------|----------------|-------------------|
+| **认证** | NextAuth Session | JWT + Zitadel OIDC |
+| **用户注入** | API 代理层 `config.configurable.supabase_user_id` | 中间件注入 `request.state.user_id` |
+| **Thread 隔离** | `metadata.supabase_user_id` 搜索过滤 | SQL `WHERE owner_id = $user_id` |
+| **Store 隔离** | 命名空间 `["type", userId]` | 不适用（无 LangGraph Store） |
+| **权限检查** | LangGraph 原生 | 每个路由手动检查 |
+
+---
+
+## 🔧 修订后的技术方案
+
+### 改造策略：分层隔离
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      目标架构                                │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. JWT 中间件                                              │
+│     ├─ 验证 token (来自 Zitadel)                            │
+│     ├─ 解析 user_id                                         │
+│     └─ 注入 request.state.user_id                           │
+│                                                             │
+│  2. 依赖注入                                                │
+│     ├─ get_current_user() → user_id                         │
+│     └─ 所有路由强制使用                                     │
+│                                                             │
+│  3. Repository 层过滤                                       │
+│     ├─ repo_query_filtered(query, user_id) [新增]           │
+│     └─ 自动添加 WHERE owner_id = $user_id                   │
+│                                                             │
+│  4. 搜索函数重写                                            │
+│     ├─ fn::text_search_v2($query, $user_id, ...)            │
+│     └─ fn::vector_search_v2($query, $user_id, ...)          │
+│                                                             │
+│  5. 数据库迁移                                              │
+│     ├─ 添加 owner_id 字段                                   │
+│     ├─ 创建索引                                             │
+│     └─ 迁移现有数据                                         │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📁 文件修改清单
+## 📁 文件修改清单（修订版）
 
 ### 第一阶段：认证系统（3-4 天）
 
 #### 新建文件
 
-| 文件 | 说明 |
-|------|------|
-| `api/dependencies.py` | `get_current_user()` 依赖函数 |
-| `open_notebook/domain/user.py` | User 模型定义 |
-| `migrations/10_multiuser.surrealql` | 添加 user 表和 owner_id 字段 |
+| 文件 | 说明 | 行数估算 |
+|------|------|----------|
+| `api/dependencies.py` | 用户依赖注入 | ~50 行 |
+| `open_notebook/domain/user.py` | User 模型 | ~80 行 |
+| `migrations/10_multiuser.surrealql` | 多用户迁移 | ~100 行 |
+| `migrations/10_multiuser_down.surrealql` | 回滚脚本 | ~30 行 |
 
 #### 修改文件
 
-| 文件 | 修改内容 | 行数估算 |
-|------|----------|----------|
-| `api/auth.py` | 重写：JWT 验证 + OIDC 集成 | ~150 行 |
-| `api/routers/auth.py` | 扩展：/register, /login, /callback, /me | ~200 行 |
-| `api/main.py` | 注册新中间件和路由 | ~20 行 |
+| 文件 | 修改内容 | 关键代码位置 |
+|------|----------|--------------|
+| `api/auth.py` | 重写为 JWT 验证 | 第 10-67 行 `PasswordAuthMiddleware` |
+| `api/routers/auth.py` | 添加 OIDC 回调 | 第 13-24 行 |
+| `api/main.py` | 注册新中间件 | 第 82-84 行 |
+| `open_notebook/database/async_migrate.py` | 添加迁移 10 | 第 91-123 行 |
 
-#### 认证中间件实现
+#### 认证中间件实现（基于代码分析）
 
 ```python
-# api/auth.py
-from jose import jwt, JWTError
-from fastapi import Request, HTTPException
-from starlette.middleware.base import BaseHTTPMiddleware
+# api/auth.py - 替换现有 PasswordAuthMiddleware
 
-class JWTAuthMiddleware(BaseHTTPMiddleware):
-    """JWT 认证中间件，从 token 提取 user_id 注入请求上下文"""
+from jose import jwt, JWTError
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+import httpx
+
+class ZitadelAuthMiddleware(BaseHTTPMiddleware):
+    """
+    Zitadel OIDC 认证中间件
+
+    工作流程:
+    1. 检查 Authorization header
+    2. 验证 JWT token (使用 Zitadel 公钥)
+    3. 提取 user_id (sub claim)
+    4. 注入到 request.state.user_id
+    """
 
     def __init__(self, app, excluded_paths: list = None):
         super().__init__(app)
         self.excluded_paths = excluded_paths or [
-            "/", "/health", "/docs", "/openapi.json",
-            "/api/auth/login", "/api/auth/callback", "/api/config"
+            "/", "/health", "/docs", "/openapi.json", "/redoc",
+            "/api/auth/status", "/api/auth/callback", "/api/config"
         ]
+        self.zitadel_issuer = os.environ.get("ZITADEL_ISSUER")
+        self._jwks_client = None
+
+    async def get_jwks_client(self):
+        """延迟初始化 JWKS 客户端"""
+        if not self._jwks_client:
+            jwks_url = f"{self.zitadel_issuer}/.well-known/jwks.json"
+            self._jwks_client = jwt.PyJWKClient(jwks_url)
+        return self._jwks_client
 
     async def dispatch(self, request: Request, call_next):
+        # 排除路径
         if request.url.path in self.excluded_paths:
             return await call_next(request)
 
+        # OPTIONS 请求直接通过
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
+        # 获取 Authorization header
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
-            return JSONResponse(status_code=401, content={"detail": "Missing token"})
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Missing or invalid authorization header"}
+            )
 
         token = auth_header.split(" ")[1]
+
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            # 验证 JWT
+            jwks_client = await self.get_jwks_client()
+            signing_key = jwks_client.get_signing_key_from_jwt(token)
+
+            payload = jwt.decode(
+                token,
+                signing_key.key,
+                algorithms=["RS256"],
+                audience=os.environ.get("ZITADEL_CLIENT_ID"),
+                issuer=self.zitadel_issuer
+            )
+
+            # 注入用户信息到请求上下文
             request.state.user_id = payload.get("sub")
             request.state.user_email = payload.get("email")
-        except JWTError:
-            return JSONResponse(status_code=401, content={"detail": "Invalid token"})
+            request.state.user_name = payload.get("name")
+
+        except JWTError as e:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": f"Invalid token: {str(e)}"}
+            )
 
         return await call_next(request)
 ```
@@ -135,34 +268,55 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
 
 ```python
 # api/dependencies.py
+
 from fastapi import Request, HTTPException, Depends
+from typing import Optional
 
 async def get_current_user(request: Request) -> str:
-    """从请求上下文获取当前用户 ID"""
+    """
+    从请求上下文获取当前用户 ID
+
+    使用方式:
+        @router.get("/notebooks")
+        async def get_notebooks(user_id: str = Depends(get_current_user)):
+            ...
+    """
     user_id = getattr(request.state, "user_id", None)
     if not user_id:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated"
+        )
     return user_id
 
-async def get_current_user_optional(request: Request) -> str | None:
-    """可选的用户认证，用于公开 + 私有混合端点"""
+async def get_current_user_optional(request: Request) -> Optional[str]:
+    """可选的用户认证（用于公开 API）"""
     return getattr(request.state, "user_id", None)
+
+async def get_user_info(request: Request) -> dict:
+    """获取完整用户信息"""
+    return {
+        "user_id": getattr(request.state, "user_id", None),
+        "email": getattr(request.state, "user_email", None),
+        "name": getattr(request.state, "user_name", None),
+    }
 ```
 
 ---
 
 ### 第二阶段：数据库迁移（2-3 天）
 
-#### 迁移脚本
+#### 完整迁移脚本
 
 ```sql
 -- migrations/10_multiuser.surrealql
+-- 多用户支持迁移
 
 -- ============================================
 -- 1. 创建用户表
 -- ============================================
 DEFINE TABLE user SCHEMAFULL;
-DEFINE FIELD external_id ON user TYPE string;      -- Zitadel 用户 ID
+DEFINE FIELD external_id ON user TYPE string;      -- Zitadel sub claim
 DEFINE FIELD email ON user TYPE string;
 DEFINE FIELD name ON user TYPE option<string>;
 DEFINE FIELD avatar ON user TYPE option<string>;
@@ -176,32 +330,33 @@ DEFINE INDEX user_email ON user COLUMNS email UNIQUE;
 -- 2. 为核心表添加 owner_id 字段
 -- ============================================
 
--- Notebook
-DEFINE FIELD owner_id ON notebook TYPE option<record<user>>;
-DEFINE INDEX notebook_owner ON notebook COLUMNS owner_id;
+-- notebook 表
+DEFINE FIELD IF NOT EXISTS owner_id ON TABLE notebook TYPE option<string>;
+DEFINE INDEX IF NOT EXISTS idx_notebook_owner ON TABLE notebook COLUMNS owner_id;
+DEFINE INDEX IF NOT EXISTS idx_notebook_owner_updated ON TABLE notebook COLUMNS (owner_id, updated DESC);
 
--- Source
-DEFINE FIELD owner_id ON source TYPE option<record<user>>;
-DEFINE INDEX source_owner ON source COLUMNS owner_id;
+-- source 表
+DEFINE FIELD IF NOT EXISTS owner_id ON TABLE source TYPE option<string>;
+DEFINE INDEX IF NOT EXISTS idx_source_owner ON TABLE source COLUMNS owner_id;
 
--- Note
-DEFINE FIELD owner_id ON note TYPE option<record<user>>;
-DEFINE INDEX note_owner ON note COLUMNS owner_id;
+-- note 表
+DEFINE FIELD IF NOT EXISTS owner_id ON TABLE note TYPE option<string>;
+DEFINE INDEX IF NOT EXISTS idx_note_owner ON TABLE note COLUMNS owner_id;
 
--- Chat Session
-DEFINE FIELD owner_id ON chat_session TYPE option<record<user>>;
-DEFINE INDEX chat_session_owner ON chat_session COLUMNS owner_id;
+-- chat_session 表
+DEFINE FIELD IF NOT EXISTS owner_id ON TABLE chat_session TYPE option<string>;
+DEFINE INDEX IF NOT EXISTS idx_chat_session_owner ON TABLE chat_session COLUMNS owner_id;
 
--- Source Embedding
-DEFINE FIELD owner_id ON source_embedding TYPE option<record<user>>;
-DEFINE INDEX source_embedding_owner ON source_embedding COLUMNS owner_id;
+-- source_embedding 表（继承 source 的 owner_id）
+DEFINE FIELD IF NOT EXISTS owner_id ON TABLE source_embedding TYPE option<string>;
+DEFINE INDEX IF NOT EXISTS idx_source_embedding_owner ON TABLE source_embedding COLUMNS owner_id;
 
--- Source Insight
-DEFINE FIELD owner_id ON source_insight TYPE option<record<user>>;
-DEFINE INDEX source_insight_owner ON source_insight COLUMNS owner_id;
+-- source_insight 表（继承 source 的 owner_id）
+DEFINE FIELD IF NOT EXISTS owner_id ON TABLE source_insight TYPE option<string>;
+DEFINE INDEX IF NOT EXISTS idx_source_insight_owner ON TABLE source_insight COLUMNS owner_id;
 
--- Transformation (用户自定义转换)
-DEFINE FIELD owner_id ON transformation TYPE option<record<user>>;
+-- transformation 表（用户自定义转换）
+DEFINE FIELD IF NOT EXISTS owner_id ON TABLE transformation TYPE option<string>;
 
 -- ============================================
 -- 3. 创建默认管理员用户
@@ -217,64 +372,213 @@ CREATE user:admin CONTENT {
 -- ============================================
 -- 4. 迁移现有数据归属管理员
 -- ============================================
-UPDATE notebook SET owner_id = user:admin WHERE owner_id IS NONE;
-UPDATE source SET owner_id = user:admin WHERE owner_id IS NONE;
-UPDATE note SET owner_id = user:admin WHERE owner_id IS NONE;
-UPDATE chat_session SET owner_id = user:admin WHERE owner_id IS NONE;
-UPDATE source_embedding SET owner_id = user:admin WHERE owner_id IS NONE;
-UPDATE source_insight SET owner_id = user:admin WHERE owner_id IS NONE;
+UPDATE notebook SET owner_id = "admin" WHERE owner_id IS NONE;
+UPDATE source SET owner_id = "admin" WHERE owner_id IS NONE;
+UPDATE note SET owner_id = "admin" WHERE owner_id IS NONE;
+UPDATE chat_session SET owner_id = "admin" WHERE owner_id IS NONE;
+
+-- 同步 source_embedding 和 source_insight 的 owner_id
+UPDATE source_embedding SET owner_id = (SELECT owner_id FROM source WHERE id = $parent.source)[0].owner_id;
+UPDATE source_insight SET owner_id = (SELECT owner_id FROM source WHERE id = $parent.source)[0].owner_id;
+
+-- ============================================
+-- 5. 重新定义搜索函数（添加用户过滤）
+-- ============================================
+
+-- 文本搜索函数 V2
+DEFINE FUNCTION OVERWRITE fn::text_search(
+    $query_text: string,
+    $match_count: int,
+    $sources: bool,
+    $show_notes: bool,
+    $user_id: option<string>  -- 新增参数
+) {
+    -- source.title 搜索（添加 owner_id 过滤）
+    let $source_title_search = IF $sources {(
+        SELECT id, title, search::highlight('`', '`', 1) as content,
+        id as parent_id, math::max(search::score(1)) AS relevance
+        FROM source
+        WHERE title @1@ $query_text
+          AND ($user_id IS NONE OR owner_id = $user_id)  -- 用户过滤
+        GROUP BY id
+    )} ELSE { [] };
+
+    -- source_embedding.content 搜索
+    let $source_embedding_search = IF $sources {(
+        SELECT source.id as id, source.title as title,
+        search::highlight('`', '`', 1) as content, source.id as parent_id,
+        math::max(search::score(1)) AS relevance
+        FROM source_embedding
+        WHERE content @1@ $query_text
+          AND ($user_id IS NONE OR owner_id = $user_id)  -- 用户过滤
+        GROUP BY id
+    )} ELSE { [] };
+
+    -- source.full_text 搜索
+    let $source_full_search = IF $sources {(
+        SELECT id, title, search::highlight('`', '`', 1) as content,
+        id as parent_id, math::max(search::score(1)) AS relevance
+        FROM source
+        WHERE full_text @1@ $query_text
+          AND ($user_id IS NONE OR owner_id = $user_id)  -- 用户过滤
+        GROUP BY id
+    )} ELSE { [] };
+
+    -- source_insight.content 搜索
+    let $source_insight_search = IF $sources {(
+        SELECT id, insight_type + " - " + (source.title OR '') as title,
+        search::highlight('`', '`', 1) as content, id as parent_id,
+        math::max(search::score(1)) AS relevance
+        FROM source_insight
+        WHERE content @1@ $query_text
+          AND ($user_id IS NONE OR owner_id = $user_id)  -- 用户过滤
+        GROUP BY id
+    )} ELSE { [] };
+
+    -- note.title 搜索
+    let $note_title_search = IF $show_notes {(
+        SELECT id, title, search::highlight('`', '`', 1) as content,
+        id as parent_id, math::max(search::score(1)) AS relevance
+        FROM note
+        WHERE title @1@ $query_text
+          AND ($user_id IS NONE OR owner_id = $user_id)  -- 用户过滤
+        GROUP BY id
+    )} ELSE { [] };
+
+    -- note.content 搜索
+    let $note_content_search = IF $show_notes {(
+        SELECT id, title, search::highlight('`', '`', 1) as content,
+        id as parent_id, math::max(search::score(1)) AS relevance
+        FROM note
+        WHERE content @1@ $query_text
+          AND ($user_id IS NONE OR owner_id = $user_id)  -- 用户过滤
+        GROUP BY id
+    )} ELSE { [] };
+
+    -- 合并结果
+    let $source_chunk_results = array::union($source_embedding_search, $source_full_search);
+    let $source_asset_results = array::union($source_title_search, $source_insight_search);
+    let $source_results = array::union($source_chunk_results, $source_asset_results);
+    let $note_results = array::union($note_title_search, $note_content_search);
+    let $final_results = array::union($source_results, $note_results);
+
+    RETURN (
+        SELECT id, parent_id, title, math::max(relevance) as relevance
+        FROM $final_results
+        WHERE id is not None
+        GROUP BY id, parent_id, title
+        ORDER BY relevance DESC
+        LIMIT $match_count
+    );
+};
+
+-- 向量搜索函数 V2
+DEFINE FUNCTION OVERWRITE fn::vector_search(
+    $query: array<float>,
+    $match_count: int,
+    $sources: bool,
+    $show_notes: bool,
+    $min_similarity: float,
+    $user_id: option<string>  -- 新增参数
+) {
+    -- source_embedding 向量搜索
+    let $source_embedding_search = IF $sources {(
+        SELECT source.id as id, source.title as title, content,
+        source.id as parent_id, vector::similarity::cosine(embedding, $query) as similarity
+        FROM source_embedding
+        WHERE embedding != none
+          AND array::len(embedding) = array::len($query)
+          AND vector::similarity::cosine(embedding, $query) >= $min_similarity
+          AND ($user_id IS NONE OR owner_id = $user_id)  -- 用户过滤
+        ORDER BY similarity DESC LIMIT $match_count
+    )} ELSE { [] };
+
+    -- source_insight 向量搜索
+    let $source_insight_search = IF $sources {(
+        SELECT id, insight_type + ' - ' + (source.title OR '') as title, content,
+        source.id as parent_id, vector::similarity::cosine(embedding, $query) as similarity
+        FROM source_insight
+        WHERE embedding != none
+          AND array::len(embedding) = array::len($query)
+          AND vector::similarity::cosine(embedding, $query) >= $min_similarity
+          AND ($user_id IS NONE OR owner_id = $user_id)  -- 用户过滤
+        ORDER BY similarity DESC LIMIT $match_count
+    )} ELSE { [] };
+
+    -- note 向量搜索
+    let $note_content_search = IF $show_notes {(
+        SELECT id, title, content, id as parent_id,
+        vector::similarity::cosine(embedding, $query) as similarity
+        FROM note
+        WHERE embedding != none
+          AND array::len(embedding) = array::len($query)
+          AND vector::similarity::cosine(embedding, $query) >= $min_similarity
+          AND ($user_id IS NONE OR owner_id = $user_id)  -- 用户过滤
+        ORDER BY similarity DESC LIMIT $match_count
+    )} ELSE { [] };
+
+    -- 合并结果
+    let $all_results = array::union(
+        array::union($source_embedding_search, $source_insight_search),
+        $note_content_search
+    );
+
+    RETURN (
+        SELECT id, parent_id, title, math::max(similarity) as similarity,
+        array::flatten(content) as matches
+        FROM $all_results
+        WHERE id is not None
+        GROUP BY id, parent_id, title
+        ORDER BY similarity DESC
+        LIMIT $match_count
+    );
+};
 ```
 
-#### User 模型
+#### 回滚脚本
 
-```python
-# open_notebook/domain/user.py
-from typing import Optional
-from pydantic import BaseModel
-from open_notebook.domain.base import ObjectModel
+```sql
+-- migrations/10_multiuser_down.surrealql
 
-class User(ObjectModel):
-    table_name = "user"
+-- 1. 移除字段
+REMOVE FIELD owner_id ON TABLE notebook;
+REMOVE FIELD owner_id ON TABLE source;
+REMOVE FIELD owner_id ON TABLE note;
+REMOVE FIELD owner_id ON TABLE chat_session;
+REMOVE FIELD owner_id ON TABLE source_embedding;
+REMOVE FIELD owner_id ON TABLE source_insight;
+REMOVE FIELD owner_id ON TABLE transformation;
 
-    external_id: str                    # Zitadel 用户 ID
-    email: str
-    name: Optional[str] = None
-    avatar: Optional[str] = None
+-- 2. 移除索引
+REMOVE INDEX idx_notebook_owner ON TABLE notebook;
+REMOVE INDEX idx_notebook_owner_updated ON TABLE notebook;
+REMOVE INDEX idx_source_owner ON TABLE source;
+REMOVE INDEX idx_note_owner ON TABLE note;
+REMOVE INDEX idx_chat_session_owner ON TABLE chat_session;
+REMOVE INDEX idx_source_embedding_owner ON TABLE source_embedding;
+REMOVE INDEX idx_source_insight_owner ON TABLE source_insight;
 
-    @classmethod
-    async def get_by_external_id(cls, external_id: str) -> Optional["User"]:
-        """通过 Zitadel ID 查找用户"""
-        from open_notebook.database.repository import repo_query
-        result = await repo_query(
-            "SELECT * FROM user WHERE external_id = $external_id",
-            {"external_id": external_id}
-        )
-        if result:
-            return cls(**result[0])
-        return None
+-- 3. 恢复原始搜索函数（从 migrations/9.surrealql 复制）
+-- ... 省略，需要完整复制原始函数定义 ...
 
-    @classmethod
-    async def get_or_create(cls, external_id: str, email: str, name: str = None) -> "User":
-        """获取或创建用户（首次登录时自动创建）"""
-        user = await cls.get_by_external_id(external_id)
-        if not user:
-            user = cls(external_id=external_id, email=email, name=name)
-            await user.save()
-        return user
+-- 4. 删除用户表（可选，保留则保存用户注册数据）
+-- REMOVE TABLE user;
 ```
 
 ---
 
-### 第三阶段：基类改造（2 天）
+### 第三阶段：基类和 Repository 改造（2 天）
 
 #### ObjectModel 基类修改
 
+**代码位置**: `open_notebook/domain/base.py`
+
 ```python
-# open_notebook/domain/base.py (修改)
+# open_notebook/domain/base.py
 
 class ObjectModel(BaseModel):
     id: Optional[str] = None
-    owner_id: Optional[str] = None  # 新增：所有者 ID
+    owner_id: Optional[str] = None  # 新增
     created: Optional[datetime] = None
     updated: Optional[datetime] = None
 
@@ -282,75 +586,126 @@ class ObjectModel(BaseModel):
     async def get_all(
         cls,
         order_by: str = None,
-        user_id: str = None,      # 新增：必须传入
-        include_shared: bool = False
-    ) -> List[T]:
-        """获取用户的所有记录"""
-        table_name = cls.get_table_name()
+        user_id: str = None,  # 新增：必须传入
+    ) -> List["ObjectModel"]:
+        """
+        获取用户的所有记录
 
-        # 系统表不需要用户过滤
-        if table_name in ["transformation", "model_config"]:
-            query = f"SELECT * FROM {table_name}"
+        注意：系统表（transformation, model_config）不需要用户过滤
+        """
+        table_name = cls.table_name
+
+        # 系统表不过滤
+        system_tables = ["transformation", "model_config", "episode_profile", "speaker_profile"]
+
+        if table_name in system_tables:
+            # 系统表返回所有（或者只返回 owner_id = NULL 的公共记录）
+            base_query = f"SELECT * FROM {table_name}"
         else:
+            # 用户表必须过滤
             if not user_id:
-                raise InvalidInputError("user_id is required for data access")
-            query = f"SELECT * FROM {table_name} WHERE owner_id = $user_id"
+                raise InvalidInputError(f"user_id is required for {table_name}")
+            base_query = f"SELECT * FROM {table_name} WHERE owner_id = $user_id"
 
         if order_by:
-            query += f" ORDER BY {order_by}"
+            query = f"{base_query} ORDER BY {order_by}"
+        else:
+            query = base_query
 
         result = await repo_query(query, {"user_id": user_id})
-        return [cls(**item) for item in result]
+        return [cls(**parse_record_ids(item)) for item in result] if result else []
 
     @classmethod
-    async def get(cls, id: str, user_id: str = None) -> Optional[T]:
-        """获取单条记录，验证所有权"""
+    async def get(cls, id: str, user_id: str = None) -> Optional["ObjectModel"]:
+        """
+        获取单条记录，验证所有权
+
+        参数:
+            id: 记录 ID
+            user_id: 当前用户 ID（用于权限验证）
+        """
         result = await repo_query(
             "SELECT * FROM $id",
             {"id": ensure_record_id(id)}
         )
+
         if not result:
             return None
 
-        obj = cls(**result[0])
+        obj = cls(**parse_record_ids(result[0]))
 
         # 验证所有权（系统表除外）
-        table_name = cls.get_table_name()
-        if table_name not in ["transformation", "model_config"]:
+        system_tables = ["transformation", "model_config", "episode_profile", "speaker_profile"]
+        if cls.table_name not in system_tables:
             if user_id and obj.owner_id and obj.owner_id != user_id:
-                raise PermissionDeniedError(f"Access denied to {id}")
+                # 返回 None 而非抛异常（安全考虑：不暴露记录是否存在）
+                return None
 
         return obj
 
     async def save(self, user_id: str = None) -> None:
-        """保存记录，自动设置 owner_id"""
-        data = self.model_dump(exclude_none=True, exclude={"id"})
-        table_name = self.get_table_name()
+        """
+        保存记录，新建时自动设置 owner_id
+        """
+        data = self._prepare_save_data()
+        table_name = self.table_name
 
         # 新建时设置 owner_id
-        if self.id is None and user_id:
-            data["owner_id"] = user_id
+        if self.id is None:
+            if user_id:
+                data["owner_id"] = user_id
             data["created"] = datetime.now()
 
         data["updated"] = datetime.now()
 
         if self.id is None:
-            result = await repo_create(table_name, data)
-            self.id = result.get("id")
+            repo_result = await repo_create(table_name, data)
+            self.id = repo_result.get("id")
         else:
             await repo_update(table_name, self.id, data)
 
     async def delete(self, user_id: str = None) -> bool:
-        """删除记录，验证所有权"""
+        """
+        删除记录，验证所有权
+        """
+        # 权限检查
         if user_id and self.owner_id and self.owner_id != user_id:
-            raise PermissionDeniedError(f"Cannot delete: access denied")
+            raise PermissionDeniedError("Cannot delete: not owner")
+
         return await repo_delete(self.id)
 ```
 
 #### Repository 层辅助函数
 
+**代码位置**: `open_notebook/database/repository.py`
+
 ```python
-# open_notebook/database/repository.py (新增)
+# open_notebook/database/repository.py - 新增函数
+
+async def repo_query_filtered(
+    query_str: str,
+    user_id: str,
+    vars: Optional[Dict[str, Any]] = None
+) -> List[Dict[str, Any]]:
+    """
+    执行带用户过滤的查询
+
+    自动在 WHERE 子句中添加 owner_id = $user_id
+    """
+    if vars is None:
+        vars = {}
+    vars["user_id"] = user_id
+
+    # 简单处理：如果查询已经有 WHERE，添加 AND；否则添加 WHERE
+    if "WHERE" in query_str.upper():
+        filtered_query = query_str.replace("WHERE", "WHERE owner_id = $user_id AND")
+    else:
+        # 在 FROM 子句后添加 WHERE
+        # 这是简化处理，复杂查询需要更精细的解析
+        filtered_query = query_str + " WHERE owner_id = $user_id"
+
+    return await repo_query(filtered_query, vars)
+
 
 async def verify_ownership(record_id: str, user_id: str) -> bool:
     """验证记录所有权"""
@@ -360,7 +715,9 @@ async def verify_ownership(record_id: str, user_id: str) -> bool:
     )
     if not result:
         return False
-    return result[0].get("owner_id") == user_id
+    owner = result[0].get("owner_id")
+    return owner is None or owner == user_id  # None 表示公共记录
+
 
 async def batch_verify_ownership(record_ids: List[str], user_id: str) -> bool:
     """批量验证所有权"""
@@ -376,83 +733,181 @@ async def batch_verify_ownership(record_ids: List[str], user_id: str) -> bool:
 
 #### 路由改造模式
 
-```python
-# api/routers/notebooks.py (改造示例)
+**代码位置**: `api/routers/notebooks.py` (示例)
 
-from fastapi import APIRouter, Depends, HTTPException
+```python
+# api/routers/notebooks.py - 改造后
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from api.dependencies import get_current_user
+from open_notebook.domain.notebook import Notebook
 
 router = APIRouter(prefix="/api/notebooks", tags=["notebooks"])
 
-@router.get("")
-async def get_notebooks(user_id: str = Depends(get_current_user)):
-    """获取用户的所有笔记本"""
-    notebooks = await Notebook.get_all(
-        order_by="updated DESC",
-        user_id=user_id  # 新增：传入用户 ID
-    )
-    return [nb.model_dump() for nb in notebooks]
 
-@router.get("/{notebook_id}")
-async def get_notebook(notebook_id: str, user_id: str = Depends(get_current_user)):
-    """获取单个笔记本"""
+@router.get("", response_model=List[NotebookResponse])
+async def get_notebooks(
+    archived: Optional[bool] = Query(None),
+    order_by: str = Query("updated desc"),
+    user_id: str = Depends(get_current_user)  # 新增
+):
+    """获取当前用户的所有笔记本"""
+
+    # 构建查询（添加 owner_id 过滤）
+    base_query = "SELECT *, count(<-reference.in) as source_count, count(<-artifact.in) as note_count FROM notebook"
+    conditions = ["owner_id = $user_id"]
+
+    if archived is not None:
+        conditions.append(f"archived = {str(archived).lower()}")
+
+    query = f"{base_query} WHERE {' AND '.join(conditions)} ORDER BY {order_by}"
+
+    result = await repo_query(query, {"user_id": user_id})
+    return result
+
+
+@router.get("/{notebook_id}", response_model=NotebookDetailResponse)
+async def get_notebook(
+    notebook_id: str,
+    user_id: str = Depends(get_current_user)  # 新增
+):
+    """获取单个笔记本（验证所有权）"""
+
     notebook = await Notebook.get(notebook_id, user_id=user_id)
     if not notebook:
         raise HTTPException(status_code=404, detail="Notebook not found")
-    return notebook.model_dump()
 
-@router.post("")
+    # 获取关联的 sources 和 notes
+    sources = await notebook.get_sources()
+    notes = await notebook.get_notes()
+
+    return NotebookDetailResponse(
+        **notebook.model_dump(),
+        sources=[s.model_dump() for s in sources],
+        notes=[n.model_dump() for n in notes]
+    )
+
+
+@router.post("", response_model=NotebookResponse)
 async def create_notebook(
     notebook_data: NotebookCreate,
-    user_id: str = Depends(get_current_user)
+    user_id: str = Depends(get_current_user)  # 新增
 ):
-    """创建笔记本"""
-    notebook = Notebook(**notebook_data.model_dump())
-    await notebook.save(user_id=user_id)  # 新增：传入用户 ID
-    return notebook.model_dump()
+    """创建笔记本（自动绑定当前用户）"""
 
-@router.put("/{notebook_id}")
+    notebook = Notebook(
+        name=notebook_data.name,
+        description=notebook_data.description or ""
+    )
+    await notebook.save(user_id=user_id)  # 传入 user_id
+
+    return NotebookResponse(**notebook.model_dump(), source_count=0, note_count=0)
+
+
+@router.put("/{notebook_id}", response_model=NotebookResponse)
 async def update_notebook(
     notebook_id: str,
     notebook_data: NotebookUpdate,
-    user_id: str = Depends(get_current_user)
+    user_id: str = Depends(get_current_user)  # 新增
 ):
-    """更新笔记本"""
+    """更新笔记本（验证所有权）"""
+
     notebook = await Notebook.get(notebook_id, user_id=user_id)
     if not notebook:
         raise HTTPException(status_code=404, detail="Notebook not found")
 
+    # 更新字段
     for key, value in notebook_data.model_dump(exclude_unset=True).items():
         setattr(notebook, key, value)
+
     await notebook.save()
-    return notebook.model_dump()
+    return NotebookResponse(**notebook.model_dump())
+
 
 @router.delete("/{notebook_id}")
-async def delete_notebook(notebook_id: str, user_id: str = Depends(get_current_user)):
-    """删除笔记本"""
+async def delete_notebook(
+    notebook_id: str,
+    user_id: str = Depends(get_current_user)  # 新增
+):
+    """删除笔记本（验证所有权）"""
+
     notebook = await Notebook.get(notebook_id, user_id=user_id)
     if not notebook:
         raise HTTPException(status_code=404, detail="Notebook not found")
+
     await notebook.delete(user_id=user_id)
-    return {"success": True}
+    return {"success": True, "message": f"Notebook {notebook_id} deleted"}
 ```
 
-#### 需要改造的路由文件
+#### 搜索路由改造
 
-| 文件 | 改动要点 | 估算行数 |
-|------|----------|----------|
-| `notebooks.py` | 所有端点添加 user_id 依赖 | +50 行 |
-| `notes.py` | 所有端点添加 user_id 依赖 | +40 行 |
-| `sources.py` | 所有端点添加 user_id 依赖，上传时设置 owner | +80 行 |
-| `chat.py` | 会话创建/查询添加 user_id | +50 行 |
-| `source_chat.py` | 来源聊天添加 user_id | +40 行 |
-| `search.py` | 搜索结果按用户过滤 | +20 行 |
-| `transformations.py` | 用户自定义转换隔离 | +30 行 |
-| `embedding.py` | 向量搜索按用户过滤 | +20 行 |
-| `embedding_rebuild.py` | 重建时验证所有权 | +20 行 |
-| `insights.py` | 洞察按用户过滤 | +20 行 |
-| `context.py` | 上下文按用户过滤 | +20 行 |
-| `podcasts.py` | 播客数据按用户过滤 | +40 行 |
+**代码位置**: `api/routers/search.py`
+
+```python
+# api/routers/search.py - 改造后
+
+@router.post("/search")
+async def search(
+    request: SearchRequest,
+    user_id: str = Depends(get_current_user)  # 新增
+):
+    """文本搜索（添加用户过滤）"""
+
+    # 调用修改后的搜索函数
+    results = await repo_query(
+        """
+        SELECT * FROM fn::text_search($query_text, $match_count, $sources, $show_notes, $user_id)
+        """,
+        {
+            "query_text": request.query,
+            "match_count": request.limit or 10,
+            "sources": request.include_sources,
+            "show_notes": request.include_notes,
+            "user_id": user_id  # 新增
+        }
+    )
+
+    return SearchResponse(results=results)
+
+
+@router.post("/ask")
+async def ask(
+    request: AskRequest,
+    user_id: str = Depends(get_current_user)  # 新增
+):
+    """RAG 问答（添加用户过滤）"""
+
+    # 向量搜索（带用户过滤）
+    vector_results = await vector_search(
+        request.query,
+        match_count=10,
+        sources=True,
+        notes=True,
+        user_id=user_id  # 新增
+    )
+
+    # 构建上下文并调用 LLM
+    context = build_context(vector_results)
+    answer = await llm.generate(request.query, context)
+
+    return AskResponse(answer=answer, sources=vector_results)
+```
+
+#### 需要改造的路由文件清单
+
+| 文件 | 端点数 | 关键改动 |
+|------|--------|----------|
+| `notebooks.py` | 5 | 所有端点添加 user_id，查询添加 owner_id 过滤 |
+| `sources.py` | 8 | 上传时设置 owner_id，同步到 embedding/insight |
+| `notes.py` | 5 | 创建时设置 owner_id |
+| `chat.py` | 6 | 会话和消息按 user_id 过滤 |
+| `source_chat.py` | 3 | 来源聊天按 user_id 过滤 |
+| `search.py` | 2 | 搜索函数传入 user_id 参数 |
+| `embedding.py` | 2 | 向量搜索按 user_id 过滤 |
+| `insights.py` | 2 | 洞察按 user_id 过滤 |
+| `context.py` | 1 | 上下文构建按 user_id 过滤 |
+| `transformations.py` | 4 | 用户自定义转换隔离（可选） |
+| `podcasts.py` | 5 | Podcast 数据按 user_id 过滤 |
 
 ---
 
@@ -460,8 +915,13 @@ async def delete_notebook(notebook_id: str, user_id: str = Depends(get_current_u
 
 #### 认证存储改造
 
+**代码位置**: `frontend/src/lib/stores/auth-store.ts`
+
 ```typescript
-// frontend/src/lib/stores/auth-store.ts
+// frontend/src/lib/stores/auth-store.ts - 改造后
+
+import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
 interface User {
   id: string
@@ -472,17 +932,25 @@ interface User {
 
 interface AuthState {
   user: User | null
-  token: string | null           // JWT token
+  token: string | null
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
+  authRequired: boolean
 }
 
 interface AuthActions {
-  login: () => Promise<void>      // 重定向到 Zitadel
+  login: () => void                              // 重定向到 Zitadel
+  handleCallback: (code: string) => Promise<void> // 处理 OIDC 回调
   logout: () => Promise<void>
-  handleCallback: (code: string) => Promise<void>
   refreshToken: () => Promise<void>
+  checkAuth: () => Promise<boolean>
+}
+
+const ZITADEL_CONFIG = {
+  issuer: process.env.NEXT_PUBLIC_ZITADEL_ISSUER || '',
+  clientId: process.env.NEXT_PUBLIC_ZITADEL_CLIENT_ID || '',
+  redirectUri: `${window.location.origin}/auth/callback`,
 }
 
 export const useAuthStore = create<AuthState & AuthActions>()(
@@ -493,47 +961,119 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      authRequired: true,
 
-      login: async () => {
-        // 重定向到 Zitadel 登录页面
-        const authUrl = `${ZITADEL_ISSUER}/oauth/v2/authorize?` +
-          `client_id=${ZITADEL_CLIENT_ID}&` +
-          `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
-          `response_type=code&` +
-          `scope=openid profile email`
-        window.location.href = authUrl
+      login: () => {
+        // 构建 Zitadel 授权 URL
+        const params = new URLSearchParams({
+          client_id: ZITADEL_CONFIG.clientId,
+          redirect_uri: ZITADEL_CONFIG.redirectUri,
+          response_type: 'code',
+          scope: 'openid profile email',
+          state: crypto.randomUUID(),
+        })
+
+        window.location.href = `${ZITADEL_CONFIG.issuer}/oauth/v2/authorize?${params}`
       },
 
       handleCallback: async (code: string) => {
-        set({ isLoading: true })
+        set({ isLoading: true, error: null })
+
         try {
           // 用授权码换取 token
-          const response = await fetch('/api/auth/callback', {
+          const apiUrl = await getApiUrl()
+          const response = await fetch(`${apiUrl}/api/auth/callback`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code })
+            body: JSON.stringify({ code, redirect_uri: ZITADEL_CONFIG.redirectUri })
           })
+
+          if (!response.ok) {
+            throw new Error('Failed to exchange code for token')
+          }
+
           const data = await response.json()
+
           set({
             user: data.user,
             token: data.access_token,
             isAuthenticated: true,
-            isLoading: false
+            isLoading: false,
           })
-        } catch (error) {
-          set({ error: error.message, isLoading: false })
+
+        } catch (error: any) {
+          set({
+            error: error.message,
+            isLoading: false,
+            isAuthenticated: false,
+          })
         }
       },
 
       logout: async () => {
-        await fetch('/api/auth/logout', { method: 'POST' })
-        set({ user: null, token: null, isAuthenticated: false })
-        window.location.href = '/login'
-      }
+        const { token } = get()
+
+        if (token) {
+          try {
+            const apiUrl = await getApiUrl()
+            await fetch(`${apiUrl}/api/auth/logout`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}` }
+            })
+          } catch (e) {
+            console.error('Logout failed:', e)
+          }
+        }
+
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+        })
+
+        // 重定向到 Zitadel 登出
+        window.location.href = `${ZITADEL_CONFIG.issuer}/oidc/v1/end_session`
+      },
+
+      refreshToken: async () => {
+        // TODO: 实现 token 刷新
+        // Zitadel 支持 refresh_token grant
+      },
+
+      checkAuth: async () => {
+        const { token, isAuthenticated } = get()
+
+        if (!token) {
+          return false
+        }
+
+        try {
+          const apiUrl = await getApiUrl()
+          const response = await fetch(`${apiUrl}/api/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+
+          if (response.ok) {
+            const user = await response.json()
+            set({ user, isAuthenticated: true })
+            return true
+          } else {
+            set({ user: null, token: null, isAuthenticated: false })
+            return false
+          }
+        } catch (e) {
+          return false
+        }
+      },
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ user: state.user, token: state.token })
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
 )
@@ -541,78 +1081,73 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
 #### API 客户端改造
 
-```typescript
-// frontend/src/lib/api/client.ts
+**代码位置**: `frontend/src/lib/api/client.ts`
 
-apiClient.interceptors.request.use(async (config) => {
-  const { token } = useAuthStore.getState()
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
+```typescript
+// frontend/src/lib/api/client.ts - 改造后
+
+import axios from 'axios'
+import { useAuthStore } from '../stores/auth-store'
+
+const apiClient = axios.create({
+  timeout: 300000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: false,
 })
 
-// 401 响应处理：尝试刷新 token
+// 请求拦截器：注入 JWT token
+apiClient.interceptors.request.use(
+  async (config) => {
+    const { token } = useAuthStore.getState()
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
+// 响应拦截器：处理 401 和 token 刷新
 apiClient.interceptors.response.use(
-  response => response,
-  async error => {
-    if (error.response?.status === 401) {
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+
       const { refreshToken, logout } = useAuthStore.getState()
+
       try {
         await refreshToken()
-        // 重试原请求
-        return apiClient.request(error.config)
-      } catch {
+
+        // 获取新 token 并重试
+        const { token } = useAuthStore.getState()
+        originalRequest.headers.Authorization = `Bearer ${token}`
+        return apiClient(originalRequest)
+
+      } catch (refreshError) {
+        // 刷新失败，登出
         await logout()
+        window.location.href = '/login'
+        return Promise.reject(refreshError)
       }
     }
+
     return Promise.reject(error)
   }
 )
-```
 
-#### 新建登录页面
-
-```typescript
-// frontend/src/app/(auth)/login/page.tsx
-
-'use client'
-
-import { useAuthStore } from '@/lib/stores/auth-store'
-
-export default function LoginPage() {
-  const { login, isLoading, error } = useAuthStore()
-
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md space-y-8 p-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold">登录 Open-Notebook</h2>
-          <p className="mt-2 text-gray-600">使用企业账号登录</p>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded">
-            {error}
-          </div>
-        )}
-
-        <button
-          onClick={login}
-          disabled={isLoading}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700"
-        >
-          {isLoading ? '正在登录...' : '使用 Zitadel 登录'}
-        </button>
-      </div>
-    </div>
-  )
-}
+export default apiClient
 ```
 
 ---
 
-## 📋 Zitadel 配置
+## 📋 Zitadel 配置（Docker 自托管）
 
 ### Docker Compose 服务
 
@@ -624,18 +1159,18 @@ zitadel:
   container_name: chairman_zitadel
   command: 'start-from-init --masterkeyFromEnv --tlsMode disabled'
   environment:
-    - ZITADEL_MASTERKEY=MasterkeyNeedsToHave32Characters
+    - ZITADEL_MASTERKEY=${ZITADEL_MASTERKEY:-MustBe32CharactersLongForSecurity!}
     - ZITADEL_DATABASE_POSTGRES_HOST=zitadel_db
     - ZITADEL_DATABASE_POSTGRES_PORT=5432
     - ZITADEL_DATABASE_POSTGRES_DATABASE=zitadel
     - ZITADEL_DATABASE_POSTGRES_USER=zitadel
-    - ZITADEL_DATABASE_POSTGRES_PASSWORD=zitadel
+    - ZITADEL_DATABASE_POSTGRES_PASSWORD=${ZITADEL_DB_PASSWORD:-zitadel}
     - ZITADEL_DATABASE_POSTGRES_SSL_MODE=disable
     - ZITADEL_EXTERNALSECURE=false
     - ZITADEL_EXTERNALPORT=8085
     - ZITADEL_EXTERNALDOMAIN=localhost
     - ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME=admin
-    - ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD=Admin123!
+    - ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD=${ZITADEL_ADMIN_PASSWORD:-Admin123!}
   ports:
     - "8085:8080"
   depends_on:
@@ -643,13 +1178,19 @@ zitadel:
       condition: service_healthy
   networks:
     - chairman_network
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+    interval: 30s
+    timeout: 10s
+    retries: 5
+    start_period: 60s
 
 zitadel_db:
   image: postgres:16-alpine
   container_name: chairman_zitadel_db
   environment:
     - POSTGRES_USER=zitadel
-    - POSTGRES_PASSWORD=zitadel
+    - POSTGRES_PASSWORD=${ZITADEL_DB_PASSWORD:-zitadel}
     - POSTGRES_DB=zitadel
   volumes:
     - ./data/zitadel_db:/var/lib/postgresql/data
@@ -662,423 +1203,512 @@ zitadel_db:
     - chairman_network
 ```
 
-### 环境变量
+### 环境变量配置
 
 ```env
 # .env
+
+# Zitadel 配置
+ZITADEL_MASTERKEY=MustBe32CharactersLongForSecurity!
+ZITADEL_DB_PASSWORD=secure_password_here
+ZITADEL_ADMIN_PASSWORD=Admin123!
 ZITADEL_ISSUER=http://localhost:8085
 ZITADEL_CLIENT_ID=<创建应用后获取>
 ZITADEL_CLIENT_SECRET=<创建应用后获取>
-JWT_SECRET_KEY=<openssl rand -base64 32>
 
-# Open-Notebook 服务
+# Open-Notebook 环境变量
 open_notebook:
   environment:
     - AUTH_PROVIDER=zitadel
     - ZITADEL_ISSUER=http://zitadel:8080
     - ZITADEL_CLIENT_ID=${ZITADEL_CLIENT_ID}
     - ZITADEL_CLIENT_SECRET=${ZITADEL_CLIENT_SECRET}
-    - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+
+# 前端环境变量
+frontend:
+  environment:
+    - NEXT_PUBLIC_ZITADEL_ISSUER=http://localhost:8085
+    - NEXT_PUBLIC_ZITADEL_CLIENT_ID=${ZITADEL_CLIENT_ID}
 ```
+
+### Zitadel 应用配置步骤
+
+1. 启动 Zitadel: `docker compose up -d zitadel_db zitadel`
+2. 等待初始化完成（约 2-3 分钟）
+3. 访问 `http://localhost:8085`
+4. 使用 `admin / Admin123!` 登录
+5. 创建项目 "Chairman Agent"
+6. 创建 Web 应用:
+   - **名称**: Open-Notebook
+   - **回调 URL**: `http://localhost:8502/auth/callback`
+   - **登出 URL**: `http://localhost:8502/login`
+7. 记录 Client ID 和 Client Secret
 
 ---
 
-## 📅 实施计划
+## 📅 实施计划（修订版 v2.0）
 
 | 阶段 | 任务 | 时间 | 交付物 |
 |------|------|------|--------|
-| **阶段 0** | Zitadel 部署 | 1 天 | 运行的认证服务 |
-| **阶段 1** | 认证系统 | 3-4 天 | JWT 中间件、依赖注入、auth 路由 |
-| **阶段 2** | 数据库迁移 | 2-3 天 | user 表、owner_id 字段、迁移脚本 |
-| **阶段 3** | 基类改造 | 2 天 | ObjectModel 用户过滤 |
-| **阶段 4** | API 改造 | 4-5 天 | 12 个路由文件改造 |
-| **阶段 5** | 前端改造 | 2-3 天 | 登录页面、用户状态管理 |
-| **阶段 6** | 测试集成 | 2 天 | E2E 测试、文档 |
+| **阶段 0** | Zitadel 部署和配置 | 1 天 | 运行的认证服务 |
+| **阶段 1** | 认证中间件和依赖注入 | 2 天 | JWT 验证 + user_id 注入 + 用户自动创建 |
+| **阶段 2** | 数据库迁移 | 2 天 | user 表 + owner_id 字段 + 搜索函数 |
+| **阶段 2.5** | **LangGraph 用户隔离** | 1-2 天 | 多租户 thread_id + 会话所有权验证 |
+| **阶段 3** | 基类和 Repository 改造 | 2 天 | ObjectModel 用户过滤 |
+| **阶段 4** | API 路由改造 | 4 天 | 12 个路由文件 |
+| **阶段 5** | 前端改造 | 2 天 | Zitadel 登录 + token 管理 |
+| **阶段 6** | 测试和文档 | 2 天 | E2E 测试 + 部署文档 |
+| **阶段 6.5** | **审计日志系统** | 0.5-1 天 | audit_log 表 + 日志记录函数 |
 
-**总计**：2-3 周
+**总计**: 约 17-19 天（3-3.5 周）
+
+> **v2.0 更新说明**：
+> - 新增阶段 2.5：LangGraph thread_id 用户隔离（审视发现的高风险遗漏）
+> - 新增阶段 6.5：审计日志系统（多用户环境必需）
+> - 阶段 1 增加：首次登录用户自动创建
 
 ---
 
-## ⚠️ 风险与应对
+## ⚠️ 风险和注意事项
 
-| 风险 | 概率 | 影响 | 应对方案 |
+### 已识别的技术债务
+
+| 问题 | 影响 | 建议 |
+|------|------|------|
+| **聊天消息不持久化** | 重启丢失历史 | 单独项目解决，添加 chat_message 表 |
+| **无数据库连接池** | 高并发瓶颈 | 考虑使用 `aioodbc` 或 SurrealDB 连接池 |
+| **LangGraph 状态隔离** | 无用户隔离 | 需要研究 LangGraph 的 thread_id 设计 |
+
+### 迁移风险
+
+| 风险 | 概率 | 影响 | 缓解措施 |
 |------|------|------|----------|
-| 数据迁移失败 | 低 | 高 | 备份数据，测试迁移脚本 |
-| API 改造遗漏 | 中 | 高 | 代码审查，单元测试覆盖 |
-| 认证流程复杂 | 中 | 中 | 分步实施，保留密码认证过渡期 |
-| 性能下降 | 低 | 中 | 添加索引，优化查询 |
-| 前后端不一致 | 中 | 中 | 统一接口规范，联调测试 |
+| 搜索函数重定义失败 | 低 | 高 | 测试环境验证，保留旧函数 |
+| 现有数据迁移不完整 | 中 | 高 | 迁移后验证脚本 |
+| 关联表 owner_id 不同步 | 中 | 中 | 触发器自动同步 |
+| 性能下降 | 低 | 中 | 添加复合索引 |
+
+### 向后兼容性
+
+- ✅ owner_id 为 OPTIONAL，默认 NULL
+- ✅ 系统表不过滤
+- ✅ 搜索函数 user_id 参数为 OPTIONAL
+- ✅ 可随时回滚（提供 down 迁移）
 
 ---
 
 ## 🧪 验证检查点
 
 ### 阶段 1 完成标准
-- [ ] Zitadel 登录成功返回 JWT
-- [ ] JWT 中间件正确提取 user_id
+- [ ] Zitadel 登录返回有效 JWT
+- [ ] JWT 中间件正确解析 user_id
 - [ ] `/api/auth/me` 返回当前用户信息
+- [ ] 无效 token 返回 401
 
 ### 阶段 2 完成标准
 - [ ] user 表创建成功
-- [ ] 所有核心表有 owner_id 字段
-- [ ] 现有数据归属 admin 用户
+- [ ] 所有核心表有 owner_id 字段和索引
+- [ ] 现有数据归属 "admin" 用户
+- [ ] 搜索函数接受 user_id 参数
 
 ### 阶段 3 完成标准
 - [ ] `Notebook.get_all(user_id=x)` 只返回用户 x 的数据
-- [ ] `Notebook.get(id, user_id=y)` 非所有者返回 403
+- [ ] `Notebook.get(id, user_id=y)` 非所有者返回 None
+- [ ] `notebook.save(user_id=x)` 自动设置 owner_id
 
 ### 阶段 4 完成标准
 - [ ] 所有 12 个路由文件改造完成
-- [ ] 单元测试覆盖用户隔离场景
+- [ ] 用户 A 无法访问用户 B 的数据
+- [ ] 搜索结果按用户隔离
 
 ### 阶段 5 完成标准
-- [ ] 前端登录流程正常
-- [ ] API 请求自动携带 token
+- [ ] 前端 Zitadel 登录流程正常
+- [ ] API 请求自动携带 JWT
 - [ ] 401 时自动跳转登录页
-
----
-
----
-
-## 🚀 部署策略
-
-### 部署架构
-
-改造后的部署架构：
-
-```
-                    ┌─────────────────┐
-                    │   Nginx/Caddy   │
-                    │   (反向代理)     │
-                    └────────┬────────┘
-                             │
-        ┌────────────────────┼────────────────────┐
-        │                    │                    │
-        ▼                    ▼                    ▼
-┌───────────────┐   ┌───────────────┐   ┌───────────────┐
-│  Open-Notebook │   │   Zitadel     │   │  OpenCanvas   │
-│   :8502/:5055  │   │    :8085      │   │    :8080      │
-└───────┬───────┘   └───────┬───────┘   └───────────────┘
-        │                   │
-        ▼                   ▼
-┌───────────────┐   ┌───────────────┐
-│   SurrealDB   │   │  PostgreSQL   │
-│    :8000      │   │  (Zitadel)    │
-└───────────────┘   └───────────────┘
-```
-
-### 首次部署流程
-
-```bash
-# 1. 备份现有数据
-./scripts/backup_surreal.sh
-
-# 2. 启动 Zitadel 服务
-docker compose up -d zitadel_db zitadel
-# 等待 Zitadel 初始化完成（约 2-3 分钟）
-
-# 3. 配置 Zitadel
-# 访问 http://localhost:8085，使用 admin/Admin123! 登录
-# 创建项目和应用，获取 Client ID/Secret
-
-# 4. 更新环境变量
-cp .env.example .env
-# 编辑 .env 添加 Zitadel 配置
-
-# 5. 运行数据库迁移
-docker exec chairman_open_notebook python -m open_notebook.database.migrate
-
-# 6. 重启 Open-Notebook 服务
-docker compose up -d open_notebook
-
-# 7. 验证部署
-curl http://localhost:5055/api/auth/status
-```
-
-### 滚动升级策略
-
-```
-阶段 1：准备期（保持兼容）
-├── 部署 Zitadel，但不强制认证
-├── 老用户继续使用密码登录
-├── 新用户可以注册 Zitadel 账号
-└── 两种认证方式并存
-
-阶段 2：迁移期（推动迁移）
-├── 通知用户创建 Zitadel 账号
-├── 提供密码→账号迁移工具
-├── 设置密码认证废弃日期
-└── 监控迁移进度
-
-阶段 3：切换期（完成迁移）
-├── 禁用密码认证
-├── 强制所有用户使用 Zitadel
-├── 清理临时兼容代码
-└── 发布正式版本
-```
-
----
-
-## 🔄 未来升级策略
-
-### 问题：官方版本升级的挑战
-
-改造后，我们的代码与官方 Open-Notebook 产生分叉，主要改动：
-
-| 改动类型 | 文件数 | 合并难度 |
-|---------|--------|---------|
-| 认证系统 | 3 | 低（独立模块） |
-| 基类 ObjectModel | 1 | 中（核心改动） |
-| API 路由 | 12 | 高（每个都有改动） |
-| 数据库迁移 | 1 | 低（追加迁移） |
-| 前端认证 | 3 | 中（状态管理） |
-
-### 解决方案：模块化改造 + 补丁管理
-
-#### 方案 A：Git 分支管理（推荐）
-
-```bash
-# 维护结构
-open-notebook/
-├── upstream/          # 官方上游代码（只读）
-├── chairman/          # 我们的改造分支
-└── patches/           # 改造补丁文件
-    ├── 001-auth-middleware.patch
-    ├── 002-base-model-owner.patch
-    ├── 003-router-user-filter.patch
-    └── 004-frontend-auth.patch
-```
-
-**升级流程：**
-
-```bash
-# 1. 获取官方更新
-cd thirdparty/open-notebook
-git fetch upstream
-git log upstream/main --oneline -10  # 查看更新内容
-
-# 2. 创建升级分支
-git checkout -b upgrade/v1.3.0 chairman/main
-
-# 3. 合并官方更新
-git merge upstream/main
-# 解决冲突（主要在路由文件）
-
-# 4. 重新应用补丁（如果需要）
-git apply patches/001-auth-middleware.patch
-
-# 5. 运行测试
-pytest tests/
-
-# 6. 合并到主分支
-git checkout chairman/main
-git merge upgrade/v1.3.0
-```
-
-#### 方案 B：抽象层隔离
-
-将多用户改动封装为独立模块，减少与官方代码的耦合：
-
-```python
-# open_notebook_extensions/multiuser/__init__.py
-"""
-多用户扩展模块 - 与官方代码解耦
-"""
-
-from .middleware import JWTAuthMiddleware
-from .dependencies import get_current_user
-from .filters import apply_user_filter
-from .models import User
-
-# 在 api/main.py 中：
-from open_notebook_extensions.multiuser import setup_multiuser
-setup_multiuser(app)  # 一行代码启用多用户
-```
-
-**目录结构：**
-
-```
-thirdparty/open-notebook/
-├── open_notebook/              # 官方代码（尽量不改）
-├── open_notebook_extensions/   # 我们的扩展（独立目录）
-│   └── multiuser/
-│       ├── __init__.py
-│       ├── middleware.py       # JWT 认证中间件
-│       ├── dependencies.py     # FastAPI 依赖
-│       ├── filters.py          # 数据过滤器
-│       ├── models.py           # User 模型
-│       └── patches/            # 必要的补丁
-│           └── base_model.py   # ObjectModel 扩展
-├── api/
-│   └── main.py                 # 只添加一行 setup_multiuser(app)
-└── migrations/
-    └── 10_multiuser.surrealql  # 独立迁移文件
-```
-
-### 升级检查清单
-
-每次官方版本升级时：
-
-```markdown
-## 升级检查清单：Open-Notebook v1.x.x → v1.y.y
-
-### 1. 变更分析
-- [ ] 查看 CHANGELOG.md
-- [ ] 检查 api/routers/ 是否有新路由
-- [ ] 检查 open_notebook/domain/base.py 是否有变化
-- [ ] 检查数据库迁移是否有冲突
-
-### 2. 代码合并
-- [ ] 合并官方更新到 chairman 分支
-- [ ] 解决冲突文件列表：
-  - [ ] api/auth.py
-  - [ ] open_notebook/domain/base.py
-  - [ ] api/routers/*.py (如有新端点)
-
-### 3. 功能验证
-- [ ] 认证流程正常
-- [ ] 数据隔离有效
-- [ ] 新功能可用
-- [ ] 性能无退化
-
-### 4. 部署
-- [ ] 运行新迁移
-- [ ] 更新 Docker 镜像
-- [ ] 滚动重启服务
-```
-
-### 长期维护建议
-
-| 策略 | 说明 | 优先级 |
-|------|------|--------|
-| **最小化改动** | 只改必要文件，使用扩展而非修改 | 🔴 高 |
-| **补丁文档化** | 每个改动都有对应的 .patch 文件和说明 | 🔴 高 |
-| **自动化测试** | 升级后自动运行测试套件 | 🟡 中 |
-| **版本锁定** | 锁定官方版本，定期评估升级 | 🟡 中 |
-| **上游贡献** | 考虑将多用户功能贡献回官方 | 🟢 低 |
-
----
-
-## 🔙 回滚策略
-
-### 数据库回滚
-
-```sql
--- migrations/10_multiuser_down.surrealql
-
--- 1. 移除 owner_id 字段（保留数据）
-REMOVE FIELD owner_id ON notebook;
-REMOVE FIELD owner_id ON source;
-REMOVE FIELD owner_id ON note;
-REMOVE FIELD owner_id ON chat_session;
-REMOVE FIELD owner_id ON source_embedding;
-REMOVE FIELD owner_id ON source_insight;
-
--- 2. 移除索引
-REMOVE INDEX notebook_owner ON notebook;
-REMOVE INDEX source_owner ON source;
--- ...
-
--- 3. 保留 user 表（不删除用户数据）
--- 如需完全回滚：
--- REMOVE TABLE user;
-```
-
-### 服务回滚
-
-```bash
-# 1. 切换回旧版本代码
-git checkout tags/v1.0.0-single-user
-
-# 2. 恢复旧环境变量
-cp .env.backup .env
-# 移除 Zitadel 相关配置
-
-# 3. 运行回滚迁移
-docker exec chairman_open_notebook python -c "
-from open_notebook.database.migrate import run_down_migration
-run_down_migration('10_multiuser')
-"
-
-# 4. 重启服务
-docker compose up -d open_notebook
-
-# 5. 验证回滚
-curl http://localhost:5055/api/notebooks
-# 应该返回所有数据（无用户过滤）
-```
-
-### 灾难恢复
-
-```bash
-# 完整数据恢复流程
-# 1. 停止服务
-docker compose down
-
-# 2. 恢复 SurrealDB 数据
-cp -r ./backups/surreal_20241127/ ./data/surreal/
-
-# 3. 恢复代码版本
-git checkout <recovery-commit>
-
-# 4. 重启服务
-docker compose up -d
-```
-
----
-
-## 📦 Docker 镜像策略
-
-### 自定义镜像构建
-
-```dockerfile
-# Dockerfile.multiuser
-FROM lfnovo/open_notebook:v1-latest-single
-
-# 复制多用户扩展
-COPY open_notebook_extensions/ /app/open_notebook_extensions/
-
-# 复制迁移文件
-COPY migrations/10_multiuser.surrealql /app/migrations/
-
-# 安装额外依赖
-RUN pip install python-jose httpx
-
-# 设置环境变量
-ENV AUTH_PROVIDER=zitadel
-```
-
-### 镜像版本管理
-
-```yaml
-# docker-compose.yml
-open_notebook:
-  # 开发环境：使用本地构建
-  build:
-    context: ./thirdparty/open-notebook
-    dockerfile: Dockerfile.multiuser
-  image: chairman/open-notebook:multiuser-v1.0.0
-
-  # 生产环境：使用私有仓库镜像
-  # image: registry.example.com/chairman/open-notebook:multiuser-v1.0.0
-```
-
-### 版本标签规范
-
-```
-chairman/open-notebook:multiuser-v1.0.0
-                       │        │ │
-                       │        │ └── 补丁版本
-                       │        └──── 次版本（官方版本对应）
-                       └───────────── 前缀标识多用户版本
-```
 
 ---
 
 ## 🔗 参考资源
 
 - [Zitadel Docker 部署](https://zitadel.com/docs/self-hosting/deploy/compose)
+- [Zitadel OIDC 配置](https://zitadel.com/docs/guides/integrate/login/oidc)
 - [FastAPI OAuth2](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/)
 - [python-jose JWT](https://python-jose.readthedocs.io/)
-- [SurrealDB 行级安全](https://surrealdb.com/docs/surrealdb/security/row-level-security)
-- [Git 补丁管理](https://git-scm.com/docs/git-format-patch)
+- [SurrealDB DEFINE FUNCTION](https://surrealdb.com/docs/surrealql/statements/define/function)
+
+---
+
+## 🔄 完整交互流程图（改造前 vs 改造后）
+
+> **v2.0 新增**：基于深度代码审视补充的完整系统交互对比图
+
+### 改造前：当前系统架构（无多用户支持）
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        改造前：Open-Notebook 系统架构                             │
+│                           ⚠️ 单用户模式，无数据隔离                                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │                          前端层 (React + Zustand)                        │  │
+│   ├─────────────────────────────────────────────────────────────────────────┤  │
+│   │   auth-store.ts                    api-client.ts                        │  │
+│   │   ┌─────────────────┐              ┌─────────────────────────┐         │  │
+│   │   │ token = 密码明文 │              │ Authorization: Bearer   │         │  │
+│   │   │ (无 user_id)    │──────────────▶│ {OPEN_NOTEBOOK_PASSWORD}│         │  │
+│   │   └─────────────────┘              └───────────┬─────────────┘         │  │
+│   └────────────────────────────────────────────────│────────────────────────┘  │
+│                                                    ▼                           │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │                           API 层 (FastAPI)                               │  │
+│   ├─────────────────────────────────────────────────────────────────────────┤  │
+│   │   PasswordAuthMiddleware                                                │  │
+│   │   ┌─────────────────────────────────────────────────────────────────┐  │  │
+│   │   │ if token == OPEN_NOTEBOOK_PASSWORD: pass  # ⚠️ 无用户信息        │  │  │
+│   │   └─────────────────────────────────────────────────────────────────┘  │  │
+│   │   路由处理器 (无用户上下文)                                              │  │
+│   │   ┌─────────────────────────────────────────────────────────────────┐  │  │
+│   │   │ @router.get("/notebooks")                                       │  │  │
+│   │   │ async def get_notebooks():  # ⚠️ 无 user_id 参数               │  │  │
+│   │   │     return await Notebook.get_all()  # 返回所有数据             │  │  │
+│   │   └─────────────────────────────────────────────────────────────────┘  │  │
+│   └─────────────────────────────────────────────────────────────────────────┘  │
+│                                                    ▼                           │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │                         Domain 层 (ObjectModel)                          │  │
+│   │   ┌─────────────────────────────────────────────────────────────────┐  │  │
+│   │   │ def get_all(): query = f"SELECT * FROM {table}"  # ⚠️ 无 WHERE  │  │  │
+│   │   │ def get(id): SELECT * FROM {id}  # ⚠️ 无权限检查                │  │  │
+│   │   └─────────────────────────────────────────────────────────────────┘  │  │
+│   └─────────────────────────────────────────────────────────────────────────┘  │
+│                                                    ▼                           │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │                          数据库层 (SurrealDB)                            │  │
+│   │   数据表: { id, name, ... } ⚠️ 无 owner_id 字段                         │  │
+│   │   搜索函数: fn::text_search($query, ...) ⚠️ 无 $user_id 参数            │  │
+│   └─────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │                        LangGraph 层 (聊天状态)                           │  │
+│   │   thread_id = session_id  # ⚠️ 无用户前缀，知道ID即可访问               │  │
+│   └─────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 改造后：目标系统架构（完整多用户支持）
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        改造后：Open-Notebook 系统架构                             │
+│                           ✅ 多用户模式，完整数据隔离                              │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │                          前端层 (React + Zustand)                        │  │
+│   │   auth-store.ts (改造后)               api-client.ts (改造后)            │  │
+│   │   ┌──────────────────────┐            ┌─────────────────────────┐      │  │
+│   │   │ user: { id, email }  │            │ Authorization: Bearer   │      │  │
+│   │   │ token: JWT           │────────────▶│ {JWT_ACCESS_TOKEN}     │      │  │
+│   │   │ refreshToken: ...    │            │ 401 → refreshToken()   │      │  │
+│   │   └──────────────────────┘            └───────────┬─────────────┘      │  │
+│   │   登录流程: → Zitadel → code → token → 存储                            │  │
+│   └───────────────────────────────────────────────────│─────────────────────┘  │
+│                                                       ▼                        │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │                           API 层 (FastAPI)                               │  │
+│   │   ZitadelAuthMiddleware (新)                                            │  │
+│   │   ┌─────────────────────────────────────────────────────────────────┐  │  │
+│   │   │ 1. 验证 JWT (JWKS 公钥)                                          │  │  │
+│   │   │ 2. 调用 ensure_user_exists() 确保用户记录存在                    │  │  │
+│   │   │ 3. request.state.user_id = sub  ✅                              │  │  │
+│   │   └─────────────────────────────────────────────────────────────────┘  │  │
+│   │   依赖注入: get_current_user() → user_id                               │  │
+│   │   路由处理器 (改造后)                                                    │  │
+│   │   ┌─────────────────────────────────────────────────────────────────┐  │  │
+│   │   │ @router.get("/notebooks")                                       │  │  │
+│   │   │ async def get_notebooks(user_id = Depends(get_current_user)):   │  │  │
+│   │   │     return await Notebook.get_all(user_id=user_id)  ✅          │  │  │
+│   │   └─────────────────────────────────────────────────────────────────┘  │  │
+│   └─────────────────────────────────────────────────────────────────────────┘  │
+│                                                    ▼                           │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │                         Domain 层 (ObjectModel)                          │  │
+│   │   ┌─────────────────────────────────────────────────────────────────┐  │  │
+│   │   │ owner_id: Optional[str]  # ✅ 新增字段                          │  │  │
+│   │   │ def get_all(user_id): WHERE owner_id = $user_id  ✅             │  │  │
+│   │   │ def get(id, user_id): 验证 owner_id == user_id  ✅              │  │  │
+│   │   │ def save(user_id): 新建时设置 owner_id  ✅                       │  │  │
+│   │   └─────────────────────────────────────────────────────────────────┘  │  │
+│   └─────────────────────────────────────────────────────────────────────────┘  │
+│                                                    ▼                           │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │                          数据库层 (SurrealDB)                            │  │
+│   │   user 表: { id, external_id, email, name }  ✅ 新增                    │  │
+│   │   数据表: { ..., owner_id } + INDEX  ✅ 新增字段和索引                  │  │
+│   │   搜索函数: fn::text_search($query, ..., $user_id)  ✅ 新增参数         │  │
+│   │   audit_log 表: { action, user_id, resource_id, timestamp }  ✅ 新增   │  │
+│   └─────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │                        LangGraph 层 (改造后)                             │  │
+│   │   thread_id = f"user_{user_id}:session_{session_id}"  ✅ 多租户隔离     │  │
+│   │   执行前验证: session.owner_id == current_user_id  ✅                   │  │
+│   └─────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 权限检查点矩阵对比
+
+| 检查点 | 改造前 | 改造后 | 实现方式 |
+|--------|--------|--------|----------|
+| 前端 Token 存储 | ⚠️ 密码明文 | ✅ JWT + Refresh | Zustand persist |
+| API 中间件认证 | ⚠️ 密码对比 | ✅ JWT 验证 | JWKS + RS256 |
+| 用户自动创建 | ❌ 无 | ✅ 首次登录创建 | ensure_user_exists() |
+| 路由级用户注入 | ❌ 无 | ✅ Depends() | get_current_user |
+| Domain 层所有权 | ❌ 无 | ✅ owner_id 验证 | ObjectModel |
+| 数据库行级过滤 | ❌ 无 | ✅ WHERE owner_id | 所有查询 |
+| 搜索函数用户过滤 | ❌ 无 | ✅ $user_id 参数 | fn::text/vector_search |
+| LangGraph 隔离 | ❌ 无 | ✅ tenant thread_id | user_prefix |
+| 审计日志 | ❌ 无 | ✅ 操作记录 | audit_log 表 |
+
+---
+
+## 📋 API 端点权限改造矩阵
+
+### notebooks.py
+
+| 端点 | 方法 | 改造前 | 改造后 | 权限检查 |
+|------|------|--------|--------|----------|
+| /notebooks | GET | 返回所有 | WHERE owner_id=$user | ✅ 依赖注入 + 查询过滤 |
+| /notebooks/{id} | GET | 直接返回 | 验证 owner_id | ✅ Domain 层所有权检查 |
+| /notebooks | POST | 直接创建 | 设置 owner_id | ✅ save(user_id) |
+| /notebooks/{id} | PUT | 直接更新 | 验证后更新 | ✅ get() + save() |
+| /notebooks/{id} | DELETE | 直接删除 | 验证后删除 | ✅ delete(user_id) |
+
+### sources.py
+
+| 端点 | 方法 | 改造前 | 改造后 | 权限检查 |
+|------|------|--------|--------|----------|
+| /sources | GET | 返回所有 | WHERE owner_id=$user | ✅ 查询过滤 |
+| /sources/{id} | GET | 直接返回 | 验证 owner_id | ✅ 所有权检查 |
+| /sources | POST | 直接创建 | 设置 owner_id | ✅ save(user_id) |
+| /sources/upload | POST | 无用户绑定 | 绑定 owner_id | ✅ 上传时设置 |
+| /sources/{id}/vectorize | POST | 无权限 | 验证后执行 | ✅ 异步任务带 user_id |
+| /sources/{id}/insights | POST | 无权限 | 验证后执行 | ✅ 异步任务带 user_id |
+
+### chat.py（重点改造）
+
+| 端点 | 方法 | 改造前 | 改造后 | 权限检查 |
+|------|------|--------|--------|----------|
+| /chat/sessions | GET | 返回所有 | WHERE owner_id=$user | ✅ 查询过滤 |
+| /chat/sessions | POST | 直接创建 | 设置 owner_id | ✅ save(user_id) |
+| /chat/sessions/{id} | GET | 直接返回 | 验证 owner_id | ✅ 所有权检查 |
+| /chat/sessions/{id} | DELETE | 直接删除 | 验证后删除 | ✅ 清理 LangGraph 状态 |
+| /chat | POST | thread_id=sess_id | thread_id=user:sess | ✅ **多租户 thread_id** |
+| /chat/history/{id} | GET | 无权限 | 验证 session 所有权 | ✅ 所有权检查 |
+
+### search.py
+
+| 端点 | 方法 | 改造前 | 改造后 | 权限检查 |
+|------|------|--------|--------|----------|
+| /search | POST | 搜索全库 | fn::text_search + user | ✅ 搜索函数带 user_id |
+| /search/vector | POST | 搜索全库 | fn::vector_search + user | ✅ 搜索函数带 user_id |
+| /ask | POST | RAG 全库 | 上下文只含用户数据 | ✅ 向量搜索 + 用户过滤 |
+
+### auth.py（新增）
+
+| 端点 | 方法 | 说明 | 权限 |
+|------|------|------|------|
+| /auth/callback | POST | OIDC code → token | 🔓 公开 |
+| /auth/refresh | POST | refresh → new token | 🔒 需要 refresh_token |
+| /auth/me | GET | 返回当前用户信息 | 🔒 需要 JWT |
+| /auth/logout | POST | 注销 token | 🔒 需要 JWT |
+
+---
+
+## 🆕 新增实现代码（v2.0 补充）
+
+### 阶段 2.5：LangGraph 多租户 thread_id
+
+**文件**: `api/routers/chat.py`
+
+```python
+def create_tenant_thread_id(user_id: str, session_id: str) -> str:
+    """创建多租户 thread_id，确保不同用户的聊天状态隔离"""
+    return f"user_{user_id}:session_{session_id}"
+
+
+@router.post("/chat")
+async def execute_chat(
+    request: ChatRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """执行聊天（带用户隔离）"""
+    # 1. 获取会话并验证所有权
+    session = await ChatSession.get(request.session_id, user_id=user_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    if session.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    # 2. 构建多租户 thread_id
+    thread_id = create_tenant_thread_id(user_id, request.session_id)
+
+    # 3. 执行聊天
+    result = chat_graph.invoke(
+        input={"messages": [HumanMessage(content=request.message)]},
+        config=RunnableConfig(configurable={"thread_id": thread_id})
+    )
+
+    # 4. 审计日志
+    await log_audit("CHAT_MESSAGE", user_id, request.session_id)
+
+    return result
+```
+
+### 阶段 1：首次登录用户自动创建
+
+**文件**: `api/auth.py`
+
+```python
+async def ensure_user_exists(external_id: str, email: str, name: str) -> str:
+    """
+    确保用户记录存在，首次登录时自动创建
+
+    参数:
+        external_id: Zitadel sub claim
+        email: 用户邮箱
+        name: 用户显示名
+
+    返回:
+        用户 ID
+    """
+    # 检查用户是否已存在
+    result = await repo_query(
+        "SELECT * FROM user WHERE external_id = $ext_id",
+        {"ext_id": external_id}
+    )
+
+    if result:
+        # 更新最后登录时间
+        await repo_update("user", result[0]["id"], {"updated": datetime.now()})
+        return result[0]["id"]
+
+    # 创建新用户
+    user = await repo_create("user", {
+        "external_id": external_id,
+        "email": email,
+        "name": name,
+        "created": datetime.now(),
+        "updated": datetime.now()
+    })
+
+    return user["id"]
+```
+
+### 阶段 6.5：审计日志系统
+
+**文件**: `migrations/11_audit_log.surrealql`
+
+```sql
+-- 审计日志表
+DEFINE TABLE audit_log SCHEMAFULL;
+
+DEFINE FIELD action ON audit_log TYPE string;           -- 操作类型: NOTEBOOK_CREATE, SOURCE_DELETE, CHAT_MESSAGE
+DEFINE FIELD user_id ON audit_log TYPE string;          -- 操作用户
+DEFINE FIELD resource_id ON audit_log TYPE option<string>;  -- 操作资源 ID
+DEFINE FIELD metadata ON audit_log TYPE option<object>; -- 额外元数据
+DEFINE FIELD ip_address ON audit_log TYPE option<string>;
+DEFINE FIELD timestamp ON audit_log TYPE datetime DEFAULT time::now();
+
+-- 索引
+DEFINE INDEX idx_audit_user ON audit_log COLUMNS user_id;
+DEFINE INDEX idx_audit_time ON audit_log COLUMNS timestamp DESC;
+DEFINE INDEX idx_audit_action ON audit_log COLUMNS action;
+```
+
+**文件**: `open_notebook/audit/logger.py`
+
+```python
+from datetime import datetime
+from open_notebook.database.repository import repo_create
+
+# 审计操作类型常量
+class AuditAction:
+    # Notebook 操作
+    NOTEBOOK_CREATE = "NOTEBOOK_CREATE"
+    NOTEBOOK_UPDATE = "NOTEBOOK_UPDATE"
+    NOTEBOOK_DELETE = "NOTEBOOK_DELETE"
+    NOTEBOOK_LIST = "NOTEBOOK_LIST"
+
+    # Source 操作
+    SOURCE_UPLOAD = "SOURCE_UPLOAD"
+    SOURCE_DELETE = "SOURCE_DELETE"
+    SOURCE_VECTORIZE = "SOURCE_VECTORIZE"
+
+    # Chat 操作
+    CHAT_SESSION_CREATE = "CHAT_SESSION_CREATE"
+    CHAT_MESSAGE = "CHAT_MESSAGE"
+
+    # 搜索操作
+    SEARCH_TEXT = "SEARCH_TEXT"
+    SEARCH_VECTOR = "SEARCH_VECTOR"
+    SEARCH_RAG = "SEARCH_RAG"
+
+
+async def log_audit(
+    action: str,
+    user_id: str,
+    resource_id: str = None,
+    metadata: dict = None,
+    ip_address: str = None
+) -> None:
+    """
+    记录审计日志
+
+    示例:
+        await log_audit(AuditAction.NOTEBOOK_CREATE, user_id, notebook.id)
+        await log_audit(AuditAction.SEARCH_RAG, user_id, metadata={"query": query})
+    """
+    await repo_create("audit_log", {
+        "action": action,
+        "user_id": user_id,
+        "resource_id": resource_id,
+        "metadata": metadata,
+        "ip_address": ip_address,
+        "timestamp": datetime.now()
+    })
+```
+
+---
+
+## 🔍 审视发现的风险项
+
+### 高风险（已在 v2.0 中解决）
+
+| 风险项 | 问题描述 | 解决方案 | 阶段 |
+|--------|----------|----------|------|
+| LangGraph 无隔离 | thread_id 直接使用 session_id，任何人知道 ID 即可访问 | 多租户 thread_id + 会话所有权验证 | 阶段 2.5 |
+| 异步任务无用户上下文 | embedding 生成等任务只传 source_id | 异步任务参数增加 user_id | 阶段 4 |
+
+### 中高风险（计划处理）
+
+| 风险项 | 问题描述 | 解决方案 | 阶段 |
+|--------|----------|----------|------|
+| 首次登录无用户创建 | user 表存在但无自动创建逻辑 | ensure_user_exists() | 阶段 1 |
+| 无审计日志 | 多用户环境无法追溯操作 | audit_log 表 + 日志函数 | 阶段 6.5 |
+
+### 延后处理（后续迭代）
+
+| 风险项 | 问题描述 | 处理建议 |
+|--------|----------|----------|
+| 级联删除不完整 | 删除 notebook/source 时关联数据未清理 | 使用软删除标记，后续迭代实现 |
+| 无 API 限流 | 高频请求可能影响服务 | 后续迭代添加 |
+
+---
+
+**文档版本**: 2.0（深度调研后修订 + 完整审视补充）
+**更新日期**: 2025-11-27
+**审核状态**: 基于代码事实验证 + 交互流程审视确认
