@@ -10,6 +10,7 @@ import { ReflectionsDialog } from "../reflections-dialog/ReflectionsDialog";
 import { useLangSmithLinkToolUI } from "../tool-hooks/LangSmithLinkToolUI";
 import { TooltipIconButton } from "../ui/assistant-ui/tooltip-icon-button";
 import { TighterText } from "../ui/header";
+import { UserMenu } from "../ui/user-menu";
 import { Composer } from "./composer";
 import { AssistantMessage, UserMessage } from "./messages";
 import ModelSelector from "./model-selector";
@@ -148,6 +149,7 @@ export const Thread: FC<ThreadProps> = (props: ThreadProps) => {
         ) : (
           <div className="flex flex-row gap-2 items-center">
             <ReflectionsDialog selectedAssistant={selectedAssistant} />
+            <UserMenu />
           </div>
         )}
       </div>
@@ -179,7 +181,7 @@ export const Thread: FC<ThreadProps> = (props: ThreadProps) => {
           }}
         />
       </ThreadPrimitive.Viewport>
-      <div className="mt-4 flex w-full flex-col items-center justify-end rounded-t-lg bg-inherit pb-4 px-4">
+      <div className="mt-4 flex w-full flex-col items-center justify-end rounded-t-lg bg-inherit pb-4 px-4 flex-shrink-0">
         <ThreadScrollToBottom />
         <div className="w-full max-w-2xl">
           {hasChatStarted && (

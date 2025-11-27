@@ -1,5 +1,6 @@
 "use client";
 
+import { SessionProvider } from "next-auth/react";
 import { Canvas } from "@/components/canvas";
 import { AssistantProvider } from "@/contexts/AssistantContext";
 import { GraphProvider } from "@/contexts/GraphContext";
@@ -10,21 +11,23 @@ import { Suspense } from "react";
 
 export default function Home() {
   return (
-    <Suspense>
-      <UserProvider>
-        <ThreadProvider>
-          <AssistantProvider>
-            <GraphProvider>
-              <div className="flex flex-col h-screen">
-                <div className="flex-1">
-                  <Canvas />
+    <SessionProvider>
+      <Suspense>
+        <UserProvider>
+          <ThreadProvider>
+            <AssistantProvider>
+              <GraphProvider>
+                <div className="flex flex-col h-screen">
+                  <div className="flex-1 overflow-hidden">
+                    <Canvas />
+                  </div>
+                  <Footer />
                 </div>
-                <Footer />
-              </div>
-            </GraphProvider>
-          </AssistantProvider>
-        </ThreadProvider>
-      </UserProvider>
-    </Suspense>
+              </GraphProvider>
+            </AssistantProvider>
+          </ThreadProvider>
+        </UserProvider>
+      </Suspense>
+    </SessionProvider>
   );
 }

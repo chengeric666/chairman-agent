@@ -110,13 +110,13 @@ export function CanvasComponent() {
   };
 
   return (
-    <ResizablePanelGroup direction="horizontal" className="h-screen">
+    <ResizablePanelGroup direction="horizontal" className="h-full">
       {!chatStarted && (
         <ResizablePanel
           defaultSize={100}
           id="welcome-panel"
           order={1}
-          className="h-screen"
+          className="h-full"
         >
           <NoSSRWrapper>
             <ContentComposerChatInterface
@@ -165,7 +165,7 @@ export function CanvasComponent() {
           defaultSize={25}
           minSize={15}
           maxSize={50}
-          className="transition-all duration-700 h-screen mr-auto bg-gray-50/70 shadow-inner-right"
+          className="transition-all duration-700 h-full mr-auto bg-gray-50/70 shadow-inner-right"
           id="chat-panel-main"
           order={1}
         >

@@ -1,11 +1,28 @@
-import { type NextRequest, NextResponse } from "next/server";
-// Supabase disabled - using local mode
-// import { updateSession } from "@/lib/supabase/middleware";
+import { auth } from "@/lib/auth/config";
 
-export async function middleware(request: NextRequest) {
-  // Bypass Supabase authentication - local mode
-  return NextResponse.next();
-}
+export default auth((req) => {
+  const isLoggedIn = !!req.auth;
+  const { pathname } = req.nextUrl;
+
+  // 公开路由：登录页、错误页、NextAuth API
+  const publicRoutes = ["/auth/login", "/auth/error", "/api/auth"];
+  const isPublicRoute = publicRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  // 静态资源
+  const isStaticAsset = pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/);
+
+  // 公开路由和静态资源直接放行
+  if (isPublicRoute || isStaticAsset) {
+    return;
+  }
+
+  // 未登录重定向到登录页
+  if (!isLoggedIn) {
+    return Response.redirect(new URL("/auth/login", req.nextUrl.origin));
+  }
+});
 
 export const config = {
   matcher: [
@@ -14,8 +31,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

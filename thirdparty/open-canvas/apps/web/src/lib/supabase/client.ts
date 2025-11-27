@@ -1,37 +1,50 @@
-// Stub implementation to bypass Supabase dependency
-// This allows the app to run without Supabase authentication in local mode
+// NextAuth 兼容层 - 替换原 Supabase client
+// 保持 API 兼容性，内部使用 NextAuth
 
-import { User } from "@supabase/supabase-js";
+import { getSession } from "next-auth/react";
 
-// Create a mock user for local development (anonymous access with user context)
-const MOCK_USER: User = {
-  id: "local-user-00000000-0000-0000-0000-000000000000",
-  email: "local@localhost",
-  aud: "authenticated",
-  role: "authenticated",
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-  app_metadata: {},
-  user_metadata: {
-    name: "Local User",
-  },
-};
+export interface User {
+  id: string;
+  email: string;
+  aud: string;
+  role: string;
+  created_at: string;
+  updated_at: string;
+  app_metadata: Record<string, unknown>;
+  user_metadata: Record<string, unknown>;
+}
 
-// Mock Supabase client that returns a mock user (allows full functionality in local mode)
+// 将 NextAuth session 转换为 Supabase 兼容的 User 格式
+function sessionToUser(session: unknown): User | null {
+  const s = session as { user?: { id?: string; email?: string; name?: string } };
+  if (!s?.user) return null;
+
+  return {
+    id: s.user.id || "",
+    email: s.user.email || "",
+    aud: "authenticated",
+    role: "authenticated",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    app_metadata: {},
+    user_metadata: { name: s.user.name || "User" },
+  };
+}
+
+// Mock Supabase client 使用 NextAuth session
 export function createSupabaseClient() {
   return {
     auth: {
-      // Return mock user - enables full app functionality without authentication
       getUser: async (): Promise<{ data: { user: User | null }; error: null }> => {
+        const session = await getSession();
         return {
-          data: { user: MOCK_USER },
+          data: { user: sessionToUser(session) },
           error: null,
         };
       },
-      // Mock other auth methods
       signOut: async () => ({ error: null }),
       signInWithPassword: async () => ({
-        data: { user: MOCK_USER, session: null },
+        data: { user: null, session: null },
         error: null,
       }),
     },

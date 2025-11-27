@@ -1,4 +1,5 @@
 import { ReflectionsDialog } from "../../reflections-dialog/ReflectionsDialog";
+import { UserMenu } from "../../ui/user-menu";
 import { ArtifactTitle } from "./artifact-title";
 import { NavigateArtifactHistory } from "./navigate-artifact-history";
 import { ArtifactCodeV3, ArtifactMarkdownV3 } from "@opencanvas/shared/types";
@@ -40,7 +41,7 @@ export function ArtifactHeader(props: ArtifactHeaderProps) {
           artifactUpdateFailed={props.artifactUpdateFailed}
         />
       </div>
-      <div className="flex gap-2 items-end mt-[10px] mr-[6px]">
+      <div className="flex gap-2 items-center mt-[10px] mr-[6px]">
         <NavigateArtifactHistory
           isBackwardsDisabled={props.isBackwardsDisabled}
           isForwardDisabled={props.isForwardDisabled}
@@ -49,6 +50,7 @@ export function ArtifactHeader(props: ArtifactHeaderProps) {
           totalArtifactVersions={props.totalArtifactVersions}
         />
         <ReflectionsDialog selectedAssistant={props.selectedAssistant} />
+        <UserMenu />
       </div>
     </div>
   );
