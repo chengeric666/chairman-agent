@@ -218,11 +218,28 @@ export function AssistantMessage({
 
 export function AssistantMessageLoading() {
   return (
-    <div className="mr-auto flex items-start gap-2">
-      <div className="bg-muted flex h-8 items-center gap-1 rounded-2xl px-4 py-2">
-        <div className="bg-foreground/50 h-1.5 w-1.5 animate-[pulse_1.5s_ease-in-out_infinite] rounded-full"></div>
-        <div className="bg-foreground/50 h-1.5 w-1.5 animate-[pulse_1.5s_ease-in-out_0.5s_infinite] rounded-full"></div>
-        <div className="bg-foreground/50 h-1.5 w-1.5 animate-[pulse_1.5s_ease-in-out_1s_infinite] rounded-full"></div>
+    <div className="mr-auto flex items-start gap-2 w-full max-w-md">
+      <div className="flex items-center gap-3 px-4 py-3 bg-muted/50 rounded-lg border border-border/50 w-full">
+        {/* 脉动圆点指示器 */}
+        <div className="relative flex-shrink-0">
+          <div className="w-3 h-3 bg-primary rounded-full animate-ping absolute opacity-75" />
+          <div className="w-3 h-3 bg-primary rounded-full relative" />
+        </div>
+        {/* 状态文字 */}
+        <div className="flex flex-col gap-1">
+          <span className="text-sm font-medium text-foreground">
+            正在深度研究中...
+          </span>
+          <span className="text-xs text-muted-foreground">
+            AI 正在分析您的问题，请稍候
+          </span>
+        </div>
+        {/* 三点动画 */}
+        <div className="ml-auto flex items-center gap-1">
+          <div className="bg-primary/50 h-1.5 w-1.5 animate-[pulse_1.5s_ease-in-out_infinite] rounded-full"></div>
+          <div className="bg-primary/50 h-1.5 w-1.5 animate-[pulse_1.5s_ease-in-out_0.5s_infinite] rounded-full"></div>
+          <div className="bg-primary/50 h-1.5 w-1.5 animate-[pulse_1.5s_ease-in-out_1s_infinite] rounded-full"></div>
+        </div>
       </div>
     </div>
   );

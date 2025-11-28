@@ -17,7 +17,7 @@
 | 3 | 界面展示排版不对齐，timeline 感不强 | 工具调用间距太小，缺少左边框线 | 🟡 中 |
 | 4 | chat 调用工具时用英文返回消息 | 硬编码英文文本 | 🟡 中 |
 | 5 | 调研完成后只看到报告，过程看不到了 | 消息过滤逻辑覆盖中间消息 | 🟡 中 |
-| 6 | 状态丢失 (threads 列表) | ThreadProvider 无持久化 | 🟢 低 |
+| 6 | 历史执行过程不可见 | UI 未使用 `stream.history`（后端已持久化） | 🟡 中 |
 | 7 | **Agent Chat UI 和 LangSmith 消息不互通** | ThreadProvider 缺少默认值 + useEffect 依赖错误 | 🔴 高 |
 
 ---
@@ -274,30 +274,84 @@ const displayMessages = showProcessMessages
 
 ---
 
-## 五、问题 6：状态持久化
+## 五、问题 6：展示完整执行历史（重新分析）
 
-### 5.1 修改 `src/providers/Thread.tsx`
+### 问题重新诊断
 
-**添加 sessionStorage 缓存**:
+**原诊断**：ThreadProvider 无持久化 → 需要 sessionStorage
+**新诊断**：LangGraph 后端**已有完整持久化**，`stream.history` **已获取数据**，但 UI 未使用
+
+```
+┌─────────────────────────────────────┐
+│ fetchStateHistory: true ✓           │
+│ SDK 自动调用 getHistory() ✓         │
+│ 数据存储在 stream.history ✓         │
+└────────────────────┬────────────────┘
+                     │ 数据已获取
+                     ▼
+┌─────────────────────────────────────┐
+│ BUT: UI 代码未读取历史数据          │
+│ ✗ 没有使用 stream.history           │
+│ ✗ 只使用 stream.messages            │
+│ ✗ messages 仅来自最后一个状态       │
+└─────────────────────────────────────┘
+```
+
+**结论**：~~sessionStorage 方案~~ → 不必要，直接使用 `stream.history`
+
+### 5.1 修改 `src/components/thread/index.tsx` - 使用 stream.history
 
 ```typescript
-const THREADS_STORAGE_KEY = 'agent-chat-threads';
+const stream = useStreamContext();
 
-// 初始化时从 sessionStorage 读取
-const [threads, setThreads] = useState<Thread[]>(() => {
-  if (typeof window !== 'undefined') {
-    const cached = sessionStorage.getItem(THREADS_STORAGE_KEY);
-    return cached ? JSON.parse(cached) : [];
-  }
-  return [];
-});
+// stream.history 已包含所有过去状态（ThreadState[]）
+// 每个 ThreadState 包含：
+// - values: 该时刻的状态值（messages, context等）
+// - metadata: 元数据（source, step, writes等）
+// - checkpoint: 检查点标识
+// - tasks: 执行任务详情
 
-// 监听 threads 变化，同步到 sessionStorage
-useEffect(() => {
-  if (typeof window !== 'undefined') {
-    sessionStorage.setItem(THREADS_STORAGE_KEY, JSON.stringify(threads));
+// 构建完整的消息历史
+const allMessages = useMemo(() => {
+  if (!stream.history || stream.history.length === 0) {
+    return stream.messages;
   }
-}, [threads]);
+  // 合并历史消息（去重）
+  const messageMap = new Map();
+  stream.history.forEach(state => {
+    state.values?.messages?.forEach(msg => {
+      if (msg.id && !messageMap.has(msg.id)) {
+        messageMap.set(msg.id, msg);
+      }
+    });
+  });
+  return Array.from(messageMap.values());
+}, [stream.history, stream.messages]);
+```
+
+### 5.2 添加执行历史时间线组件（可选增强）
+
+```typescript
+// 新建 src/components/thread/execution-timeline.tsx
+export function ExecutionTimeline({ history }: { history: ThreadState[] }) {
+  return (
+    <div className="timeline-container">
+      {history.map((state, index) => (
+        <div key={state.checkpoint?.checkpoint_id || index} className="timeline-item">
+          <div className="timeline-dot" />
+          <div className="timeline-content">
+            <span className="text-xs text-muted-foreground">
+              Step {state.metadata?.step || index}
+            </span>
+            <span className="text-sm font-medium">
+              {state.metadata?.source || 'unknown'}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 ```
 
 ---
@@ -424,7 +478,7 @@ client.threads.search({
 | 操作 | 文件 | 修改内容 |
 |------|------|----------|
 | 修改 | `src/providers/Stream.tsx` | 添加页面可见性监听和重连逻辑 |
-| 修改 | `src/providers/Thread.tsx` | **添加默认值** + sessionStorage 持久化 |
+| 修改 | `src/providers/Thread.tsx` | **添加默认值**（不再需要 sessionStorage） |
 | 修改 | `src/components/thread/index.tsx` | 增强加载指示器 + 保留研究过程 |
 | 修改 | `src/components/thread/history/index.tsx` | **修复 useEffect 依赖** + 添加刷新按钮 |
 | 修改 | `src/components/thread/messages/tool-calls.tsx` | Timeline 样式 + 中文化 |
@@ -450,12 +504,49 @@ client.threads.search({
    - [ ] 添加展开/收起控制
    - [ ] 添加历史列表刷新按钮
 
-4. **第四阶段** (🟢 低优先级 - 增强)
-   - [ ] 状态持久化 (Thread.tsx sessionStorage)
+4. **第四阶段** (🟡 中优先级 - 历史展示)
+   - [ ] 使用 `stream.history` 展示完整执行历史
+   - [ ] 添加执行历史时间线组件（可选）
 
 ---
 
-## 九、预期效果
+## 九、使用 frontend-design Skill 打磨 UX
+
+**重要**：在实施每个阶段时，调用 `skill frontend-design` 来确保高质量的视觉设计。
+
+### 9.1 Skill 调用时机
+
+| 阶段 | Skill 使用场景 |
+|------|---------------|
+| 第一阶段 | 加载状态指示器设计、页面切换动画 |
+| 第二阶段 | Timeline 视觉设计、工具调用卡片样式 |
+| 第三阶段 | 展开/收起控件设计、研究过程视图 |
+| 全局 | 整体配色、间距、动画、响应式布局 |
+
+### 9.2 设计目标
+
+参考 Claude 的 Timeline 视觉效果：
+- 清晰的左侧边框线
+- 圆点状态指示器（进行中/完成）
+- 适当的卡片间距
+- 优雅的展开/收起动画
+- 杂志级阅读体验
+
+### 9.3 执行命令
+
+```
+skill frontend-design
+```
+
+在实施代码修改后，使用此 skill 审查并优化：
+- 组件视觉设计
+- 动画和过渡效果
+- 响应式布局
+- 深色模式适配
+
+---
+
+## 十、预期效果
 
 修改完成后：
 
@@ -464,5 +555,6 @@ client.threads.search({
 3. ✅ 工具调用以 Timeline 形式清晰展示，类似 Claude
 4. ✅ 所有界面文本为中文
 5. ✅ 研究完成后可查看完整过程，也可收起只看报告
-6. ✅ 刷新页面不丢失 threads 列表
+6. ✅ 使用 `stream.history` 展示完整执行历史（无需 sessionStorage）
 7. ✅ **Agent Chat UI 和 LangSmith Studio 的 threads 互通，历史消息可见**
+8. ✅ **通过 frontend-design skill 确保杂志级视觉体验**

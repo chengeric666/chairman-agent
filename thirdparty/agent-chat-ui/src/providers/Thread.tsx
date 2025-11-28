@@ -33,9 +33,18 @@ function getThreadSearchMetadata(
   }
 }
 
+// 环境变量配置
+const envApiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+const envAssistantId = process.env.NEXT_PUBLIC_ASSISTANT_ID || "";
+
 export function ThreadProvider({ children }: { children: ReactNode }) {
-  const [apiUrl] = useQueryState("apiUrl");
-  const [assistantId] = useQueryState("assistantId");
+  // 添加默认值，确保与 StreamProvider 一致
+  const [apiUrl] = useQueryState("apiUrl", {
+    defaultValue: envApiUrl,
+  });
+  const [assistantId] = useQueryState("assistantId", {
+    defaultValue: envAssistantId,
+  });
   const [threads, setThreads] = useState<Thread[]>([]);
   const [threadsLoading, setThreadsLoading] = useState(false);
 

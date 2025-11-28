@@ -24,6 +24,8 @@ import {
   Plus,
   Home,
   Microscope,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
@@ -88,6 +90,116 @@ function ScrollToBottom(props: { className?: string }) {
   );
 }
 
+// 研究过程折叠容器 - 采用 Human Interrupt 卡片样式
+function SupervisorMessagesContainer({
+  messages,
+  isLoading,
+  handleRegenerate,
+}: {
+  messages: Message[];
+  isLoading: boolean;
+  handleRegenerate: (parentCheckpoint: Checkpoint | null | undefined) => void;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false); // 默认收起，完成后研究过程可折叠查看
+
+  // 研究进行中但还没有 supervisor_messages
+  if (!messages || messages.length === 0) {
+    if (isLoading) {
+      return (
+        <div className="overflow-hidden rounded-lg border border-border">
+          <div className="border-b border-border bg-muted/50 px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-medium text-foreground">研究过程</h3>
+              <span className="text-sm text-primary">进行中...</span>
+            </div>
+          </div>
+          <div className="bg-muted/30 p-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <LoaderCircle className="w-4 h-4 animate-spin" />
+              <span>正在研究中...</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  }
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-border">
+      {/* 卡片头部 - Human Interrupt 样式 */}
+      <div className="border-b border-border bg-muted/50 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-medium text-foreground">研究过程</h3>
+          {isLoading && <span className="text-sm text-primary">进行中...</span>}
+        </div>
+      </div>
+
+      {/* 内容区域 */}
+      <div className="bg-muted/30">
+        {isExpanded ? (
+          // 展开内容 - Timeline 样式
+          <div className="p-4">
+            <div className="relative pl-6 ml-3 border-l-2 border-primary/30">
+              <div className="space-y-4">
+                {messages.map((message, index) => (
+                  <div key={`supervisor-msg-${index}-${message.id || 'no-id'}`} className="relative">
+                    {/* Timeline 圆点指示器 */}
+                    <div className="absolute -left-[33px] top-3 w-4 h-4 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    </div>
+                    {/* 消息内容 */}
+                    <AssistantMessage
+                      message={message}
+                      isLoading={isLoading && index === messages.length - 1}
+                      handleRegenerate={handleRegenerate}
+                    />
+                  </div>
+                ))}
+                {/* 加载中指示器 */}
+                {isLoading && (
+                  <div className="relative">
+                    <div className="absolute -left-[33px] top-2 w-4 h-4 rounded-full bg-primary animate-pulse" />
+                    <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+                      <LoaderCircle className="w-4 h-4 animate-spin" />
+                      <span>正在研究中...</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          // 收起时显示摘要
+          <div className="p-4">
+            <p className="text-sm text-muted-foreground">
+              共 {messages.length} 条研究记录
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* 底部展开/收起按钮 - Human Interrupt 样式 */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex w-full cursor-pointer items-center justify-center border-t border-border py-2 text-muted-foreground transition-all duration-200 ease-in-out hover:bg-muted/50 hover:text-foreground"
+      >
+        {isExpanded ? (
+          <>
+            <ChevronUp className="h-4 w-4 mr-1" />
+            <span className="text-xs">收起</span>
+          </>
+        ) : (
+          <>
+            <ChevronDown className="h-4 w-4 mr-1" />
+            <span className="text-xs">展开详情</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
 function BackToNotebook() {
   return (
     <TooltipProvider>
@@ -121,6 +233,10 @@ export function Thread() {
   const [hideToolCalls, setHideToolCalls] = useQueryState(
     "hideToolCalls",
     parseAsBoolean.withDefault(false),
+  );
+  const [showProcessMessages, setShowProcessMessages] = useQueryState(
+    "showProcess",
+    parseAsBoolean.withDefault(true),
   );
   const [input, setInput] = useState("");
   const {
@@ -403,24 +519,68 @@ export function Thread() {
               contentClassName="pt-8 pb-16 max-w-3xl mx-auto flex flex-col gap-4 w-full"
               content={
                 <>
-                  {messages
-                    .filter((m) => !m.id?.startsWith(DO_NOT_RENDER_ID_PREFIX))
-                    .map((message, index) =>
-                      message.type === "human" ? (
-                        <HumanMessage
-                          key={message.id || `${message.type}-${index}`}
-                          message={message}
-                          isLoading={isLoading}
-                        />
-                      ) : (
-                        <AssistantMessage
-                          key={message.id || `${message.type}-${index}`}
-                          message={message}
-                          isLoading={isLoading}
-                          handleRegenerate={handleRegenerate}
-                        />
-                      ),
-                    )}
+                  {/* 渲染消息列表 */}
+                  {(() => {
+                    const filteredMessages = messages.filter((m) =>
+                      showProcessMessages || !m.id?.startsWith(DO_NOT_RENDER_ID_PREFIX)
+                    );
+                    const values = stream.values as any;
+                    const supervisorMessages = values?.supervisor_messages || [];
+                    const hasFinalReport = !!values?.final_report;
+
+                    // 找到最后一条 AI 消息的索引（通常是最终报告）
+                    let lastAiIndex = -1;
+                    for (let i = filteredMessages.length - 1; i >= 0; i--) {
+                      if (filteredMessages[i].type === 'ai') {
+                        lastAiIndex = i;
+                        break;
+                      }
+                    }
+
+                    return filteredMessages.map((message, index) => {
+                      const elements: React.ReactNode[] = [];
+
+                      // 在最终报告之前插入研究过程（如果有）
+                      // 条件：1) 开关打开 2) 是最后一条ai消息 3) 有supervisor_messages或正在加载
+                      if (
+                        showProcessMessages &&
+                        index === lastAiIndex &&
+                        hasFinalReport &&
+                        (supervisorMessages.length > 0 || isLoading)
+                      ) {
+                        elements.push(
+                          <SupervisorMessagesContainer
+                            key="supervisor-messages"
+                            messages={supervisorMessages}
+                            isLoading={isLoading}
+                            handleRegenerate={handleRegenerate}
+                          />
+                        );
+                      }
+
+                      // 渲染消息本身
+                      if (message.type === "human") {
+                        elements.push(
+                          <HumanMessage
+                            key={message.id || `${message.type}-${index}`}
+                            message={message}
+                            isLoading={isLoading}
+                          />
+                        );
+                      } else {
+                        elements.push(
+                          <AssistantMessage
+                            key={message.id || `${message.type}-${index}`}
+                            message={message}
+                            isLoading={isLoading}
+                            handleRegenerate={handleRegenerate}
+                          />
+                        );
+                      }
+
+                      return elements;
+                    });
+                  })()}
                   {/* Special rendering case where there are no AI/tool messages, but there is an interrupt.
                     We need to render it outside of the messages list, since there are no messages to render */}
                   {hasNoAIOrToolMessages && !!stream.interrupt && (
@@ -526,21 +686,32 @@ export function Thread() {
                         className="field-sizing-content resize-none border-none bg-transparent p-3.5 pb-0 shadow-none ring-0 outline-none focus:ring-0 focus:outline-none text-base"
                       />
 
-                      <div className="flex items-center gap-6 p-2 pt-4">
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              id="render-tool-calls"
-                              checked={hideToolCalls ?? false}
-                              onCheckedChange={setHideToolCalls}
-                            />
-                            <Label
-                              htmlFor="render-tool-calls"
-                              className="text-sm text-muted-foreground"
-                            >
-                              隐藏工具调用
-                            </Label>
-                          </div>
+                      <div className="flex flex-wrap items-center gap-4 p-2 pt-4">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="render-tool-calls"
+                            checked={hideToolCalls ?? false}
+                            onCheckedChange={setHideToolCalls}
+                          />
+                          <Label
+                            htmlFor="render-tool-calls"
+                            className="text-sm text-muted-foreground"
+                          >
+                            隐藏工具调用
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="show-process"
+                            checked={showProcessMessages ?? true}
+                            onCheckedChange={setShowProcessMessages}
+                          />
+                          <Label
+                            htmlFor="show-process"
+                            className="text-sm text-muted-foreground"
+                          >
+                            显示研究过程
+                          </Label>
                         </div>
                         <Label
                           htmlFor="file-input"

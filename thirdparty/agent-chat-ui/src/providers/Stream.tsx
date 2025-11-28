@@ -4,6 +4,8 @@ import React, {
   ReactNode,
   useState,
   useEffect,
+  useCallback,
+  useRef,
 } from "react";
 import { useStream } from "@langchain/langgraph-sdk/react";
 import { type Message } from "@langchain/langgraph-sdk";
@@ -25,7 +27,17 @@ import { getApiKey } from "@/lib/api-key";
 import { useThreads } from "./Thread";
 import { toast } from "sonner";
 
-export type StateType = { messages: Message[]; ui?: UIMessage[] };
+// Deep Researcher 完整状态类型
+export type StateType = {
+  messages: Message[];
+  ui?: UIMessage[];
+  // Deep Researcher 特定字段
+  supervisor_messages?: Message[];
+  notes?: string[];
+  raw_notes?: string[];
+  research_brief?: string;
+  final_report?: string;
+};
 
 const useTypedStream = useStream<
   StateType,
@@ -100,6 +112,31 @@ const StreamSession = ({
       sleep().then(() => getThreads().then(setThreads).catch(console.error));
     },
   });
+
+  // 页面可见性管理：切换回来时重新获取线程状态，解决白屏问题
+  const lastVisibleTime = useRef<number>(Date.now());
+  const STALE_THRESHOLD = 30000; // 30秒后认为数据可能过期
+
+  const handleVisibilityChange = useCallback(() => {
+    if (document.visibilityState === "visible" && threadId) {
+      const timeSinceLastVisible = Date.now() - lastVisibleTime.current;
+      // 如果离开时间超过阈值，重新获取状态
+      if (timeSinceLastVisible > STALE_THRESHOLD) {
+        console.log("[StreamProvider] 页面重新可见，刷新线程状态...");
+        // 使用 streamValue 的 refetch 能力重新获取历史
+        getThreads().then(setThreads).catch(console.error);
+      }
+    } else if (document.visibilityState === "hidden") {
+      lastVisibleTime.current = Date.now();
+    }
+  }, [threadId, getThreads, setThreads]);
+
+  useEffect(() => {
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [handleVisibilityChange]);
 
   useEffect(() => {
     checkGraphStatus(apiUrl, apiKey).then((ok) => {

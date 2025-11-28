@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useThreads } from "@/providers/Thread";
 import { Thread } from "@langchain/langgraph-sdk";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 
 import { getContentString } from "../utils";
 import { useQueryState, parseAsBoolean } from "nuqs";
@@ -12,8 +12,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PanelRightOpen, PanelRightClose } from "lucide-react";
+import { PanelRightOpen, PanelRightClose, RefreshCw } from "lucide-react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { cn } from "@/lib/utils";
 
 function ThreadList({
   threads,
@@ -75,6 +76,10 @@ function ThreadHistoryLoading() {
   );
 }
 
+// 环境变量配置
+const envApiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+const envAssistantId = process.env.NEXT_PUBLIC_ASSISTANT_ID || "";
+
 export default function ThreadHistory() {
   const isLargeScreen = useMediaQuery("(min-width: 1024px)");
   const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
@@ -82,17 +87,30 @@ export default function ThreadHistory() {
     parseAsBoolean.withDefault(false),
   );
 
+  // 获取 URL 参数（用于依赖检测）
+  const [apiUrl] = useQueryState("apiUrl", { defaultValue: envApiUrl });
+  const [assistantId] = useQueryState("assistantId", { defaultValue: envAssistantId });
+
   const { getThreads, threads, setThreads, threadsLoading, setThreadsLoading } =
     useThreads();
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  // 刷新线程列表的回调
+  const refreshThreads = useCallback(() => {
+    if (!apiUrl || !assistantId) return;
     setThreadsLoading(true);
     getThreads()
       .then(setThreads)
       .catch(console.error)
       .finally(() => setThreadsLoading(false));
-  }, []);
+  }, [apiUrl, assistantId, getThreads, setThreads, setThreadsLoading]);
+
+  // 修复：添加正确的依赖数组，当 apiUrl/assistantId 变化时重新加载
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!apiUrl || !assistantId) return; // 等待参数准备好
+
+    refreshThreads();
+  }, [apiUrl, assistantId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -109,9 +127,21 @@ export default function ThreadHistory() {
               <PanelRightClose className="size-5" />
             )}
           </Button>
-          <h1 className="text-xl font-semibold tracking-tight text-primary">
-            研究历史
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold tracking-tight text-primary">
+              研究历史
+            </h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={refreshThreads}
+              disabled={threadsLoading}
+              className="h-7 w-7 hover:bg-gray-100"
+              title="刷新列表"
+            >
+              <RefreshCw className={cn("h-4 w-4", threadsLoading && "animate-spin")} />
+            </Button>
+          </div>
         </div>
         {threadsLoading ? (
           <ThreadHistoryLoading />

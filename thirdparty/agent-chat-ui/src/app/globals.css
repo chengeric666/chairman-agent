@@ -363,3 +363,236 @@
   background: rgba(59, 130, 246, 0.2);
   color: inherit;
 }
+
+/* ========================================
+   Timeline 研究过程样式 - Claude 风格
+   ======================================== */
+
+/* Timeline 容器 - 左边框渐变 */
+.timeline-container {
+  @apply relative pl-6 ml-3;
+}
+
+.timeline-container::before {
+  content: '';
+  @apply absolute left-0 top-0 bottom-0 w-0.5;
+  background: linear-gradient(
+    to bottom,
+    rgba(59, 130, 246, 0.5),
+    rgba(59, 130, 246, 0.2),
+    transparent
+  );
+}
+
+/* Timeline 圆点 - 带动画 */
+.timeline-dot {
+  @apply absolute -left-[9px] w-4 h-4 rounded-full bg-background border-2 border-primary flex items-center justify-center;
+  animation: timeline-dot-appear 0.3s ease-out;
+}
+
+.timeline-dot::after {
+  content: '';
+  @apply w-1.5 h-1.5 rounded-full bg-primary;
+}
+
+.timeline-dot.completed {
+  @apply bg-green-500 border-green-500;
+}
+
+.timeline-dot.completed::after {
+  @apply bg-white;
+}
+
+.timeline-dot.in-progress {
+  animation: timeline-dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes timeline-dot-appear {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes timeline-dot-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
+}
+
+/* 工具调用卡片增强 */
+.tool-call-card {
+  @apply bg-card border border-border/50 rounded-lg shadow-sm;
+  @apply hover:border-primary/30 hover:shadow-md transition-all duration-300;
+  animation: tool-card-slide-in 0.4s ease-out;
+}
+
+.tool-call-card:hover {
+  transform: translateX(4px);
+}
+
+@keyframes tool-card-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 工具结果卡片 - 绿色完成状态 */
+.tool-result-card {
+  @apply bg-card border border-green-200/50 rounded-lg shadow-sm;
+  animation: tool-result-appear 0.4s ease-out;
+}
+
+@keyframes tool-result-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 研究进度指示器 */
+.research-progress {
+  @apply flex items-center gap-3 px-4 py-3 bg-primary/5 rounded-lg border border-primary/20;
+  animation: research-progress-pulse 2s ease-in-out infinite;
+}
+
+@keyframes research-progress-pulse {
+  0%, 100% {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+}
+
+/* 脉动圆点 - 更优雅的动画 */
+.pulse-dot {
+  @apply relative w-3 h-3;
+}
+
+.pulse-dot::before {
+  content: '';
+  @apply absolute inset-0 rounded-full bg-primary animate-ping opacity-75;
+}
+
+.pulse-dot::after {
+  content: '';
+  @apply absolute inset-0 rounded-full bg-primary;
+}
+
+/* 历史列表项 - 带序号效果 */
+.history-thread-item {
+  @apply relative pl-4 transition-all duration-200;
+}
+
+.history-thread-item::before {
+  content: '';
+  @apply absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-border;
+  transition: all 0.2s ease;
+}
+
+.history-thread-item:hover::before {
+  @apply bg-primary scale-150;
+}
+
+.history-thread-item.active::before {
+  @apply bg-primary w-2 h-2;
+}
+
+/* 消息入场动画 - 交错效果 */
+.message-stagger-enter {
+  animation: message-stagger 0.5s ease-out forwards;
+}
+
+@keyframes message-stagger {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 刷新按钮旋转动画 */
+.refresh-spin {
+  animation: refresh-rotate 1s linear infinite;
+}
+
+@keyframes refresh-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 深度研究状态横幅 */
+.research-status-banner {
+  @apply fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 py-2 px-4;
+  background: linear-gradient(90deg,
+    rgba(59, 130, 246, 0.9),
+    rgba(37, 99, 235, 0.9),
+    rgba(59, 130, 246, 0.9)
+  );
+  background-size: 200% 100%;
+  animation: gradient-flow 3s ease infinite;
+}
+
+@keyframes gradient-flow {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* 暗色模式下的 Timeline 适配 */
+.dark .timeline-container::before {
+  background: linear-gradient(
+    to bottom,
+    rgba(96, 165, 250, 0.5),
+    rgba(96, 165, 250, 0.2),
+    transparent
+  );
+}
+
+.dark .tool-call-card:hover {
+  box-shadow: 0 8px 30px -10px rgba(96, 165, 250, 0.2);
+}
+
+/* 响应式适配 */
+@media (max-width: 640px) {
+  .timeline-container {
+    @apply pl-4 ml-1;
+  }
+
+  .timeline-dot {
+    @apply w-3 h-3 -left-[7px];
+  }
+
+  .timeline-dot::after {
+    @apply w-1 h-1;
+  }
+}
