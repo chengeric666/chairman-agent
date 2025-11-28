@@ -1,0 +1,365 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ========================================
+   TuringFlow 董智深度研究 - 主题样式
+   设计理念：杂志级阅读体验 + 专业研究工具
+   ======================================== */
+
+:root {
+  /* TuringFlow 蓝色系主题 */
+  --background: oklch(0.995 0.002 260);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+
+  /* TuringFlow 品牌蓝 */
+  --primary: oklch(0.623 0.214 259.815);
+  --primary-foreground: oklch(0.985 0 0);
+
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.008 260);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.95 0.02 260);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.008 260);
+  --input: oklch(0.92 0.008 260);
+  --ring: oklch(0.623 0.214 259.815);
+
+  /* 图表颜色 */
+  --chart-1: oklch(0.623 0.214 259.815);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  --radius: 0.75rem;
+
+  /* 侧边栏样式 */
+  --sidebar: oklch(0.99 0.005 260);
+  --sidebar-foreground: oklch(0.141 0.005 285.823);
+  --sidebar-primary: oklch(0.623 0.214 259.815);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.95 0.02 260);
+  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-border: oklch(0.92 0.008 260);
+  --sidebar-ring: oklch(0.623 0.214 259.815);
+}
+
+.dark {
+  --background: oklch(0.12 0.01 260);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.16 0.012 260);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.16 0.012 260);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.65 0.2 259.815);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.22 0.015 260);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.22 0.015 260);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.25 0.02 260);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.28 0.02 260);
+  --input: oklch(0.28 0.02 260);
+  --ring: oklch(0.55 0.2 260);
+  --chart-1: oklch(0.65 0.2 259.815);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.14 0.012 260);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.65 0.2 259.815);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.22 0.015 260);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.28 0.02 260);
+  --sidebar-ring: oklch(0.55 0.2 260);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply antialiased scroll-smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    /* 杂志级中文字体栈 - 优先使用系统中文字体 */
+    font-family:
+      -apple-system,
+      BlinkMacSystemFont,
+      "PingFang SC",
+      "Hiragino Sans GB",
+      "Microsoft YaHei",
+      "Segoe UI",
+      "Roboto",
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
+    font-feature-settings: "kern" 1, "liga" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* 杂志级标题样式 */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+  }
+
+  /* 优化中文段落阅读体验 */
+  p {
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+  }
+
+  :root {
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    color-scheme: dark;
+  }
+}
+
+@layer utilities {
+  .shadow-inner-right {
+    box-shadow: inset -9px 0 6px -1px rgb(0 0 0 / 0.02);
+  }
+
+  .shadow-inner-left {
+    box-shadow: inset 9px 0 6px -1px rgb(0 0 0 / 0.02);
+  }
+
+  /* TuringFlow 品牌渐变 */
+  .text-gradient-turingflow {
+    background: linear-gradient(135deg, #60A5FA, #3B82F6, #2563EB);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-gradient-turingflow {
+    background: linear-gradient(135deg, #60A5FA, #3B82F6, #2563EB);
+  }
+
+  /* 杂志级卡片悬停效果 */
+  .card-magazine {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .card-magazine:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 10px 40px -10px rgba(59, 130, 246, 0.15),
+      0 4px 20px -5px rgba(0, 0, 0, 0.08);
+  }
+
+  /* 研究内容排版 */
+  .prose-research {
+    @apply leading-relaxed;
+  }
+
+  .prose-research h1 {
+    @apply text-2xl font-bold mb-6 pb-3 border-b border-border;
+  }
+
+  .prose-research h2 {
+    @apply text-xl font-semibold mt-8 mb-4 text-primary;
+  }
+
+  .prose-research h3 {
+    @apply text-lg font-medium mt-6 mb-3;
+  }
+
+  .prose-research p {
+    @apply mb-4 text-muted-foreground;
+  }
+
+  .prose-research ul, .prose-research ol {
+    @apply mb-4 pl-6;
+  }
+
+  .prose-research li {
+    @apply mb-2;
+  }
+
+  .prose-research blockquote {
+    @apply border-l-4 border-primary/30 pl-4 py-2 my-4 italic bg-muted/50 rounded-r-lg;
+  }
+
+  .prose-research code {
+    @apply px-1.5 py-0.5 rounded bg-muted text-sm font-mono;
+  }
+
+  .prose-research pre {
+    @apply p-4 rounded-lg bg-muted overflow-x-auto my-4;
+  }
+
+  /* 侧边栏历史记录样式 */
+  .history-item {
+    @apply transition-all duration-200 rounded-lg;
+  }
+
+  .history-item:hover {
+    @apply bg-sidebar-accent;
+  }
+
+  .history-item.active {
+    @apply bg-primary/10 border-l-2 border-primary;
+  }
+
+  /* 输入框聚焦动画 */
+  .input-focus-ring {
+    @apply transition-shadow duration-200;
+  }
+
+  .input-focus-ring:focus-within {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+
+  /* 消息气泡动画 */
+  .message-bubble {
+    @apply animate-in fade-in-0 slide-in-from-bottom-2 duration-300;
+  }
+
+  /* 加载动画 */
+  .loading-pulse {
+    animation: pulse-turingflow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-turingflow {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* 径向渐变背景 */
+  .bg-gradient-radial {
+    background: radial-gradient(circle, var(--tw-gradient-stops));
+  }
+
+  /* Logo 悬浮动画 */
+  .logo-float {
+    animation: logo-float 6s ease-in-out infinite;
+  }
+
+  @keyframes logo-float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  /* 光晕脉动动画 */
+  .glow-pulse {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scale(1.1);
+    }
+  }
+}
+
+/* 美化滚动条 - 与Open Notebook一致 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* 选择文本样式 */
+::selection {
+  background: rgba(59, 130, 246, 0.2);
+  color: inherit;
+}

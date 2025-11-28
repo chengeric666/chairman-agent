@@ -62,7 +62,7 @@ const navigation = [
     title: 'AI创作',
     items: [
       { name: '开智创作', href: 'http://localhost:8080', icon: PenLine, external: true as const },
-      { name: '深度研究', href: 'http://localhost:2024', icon: Microscope, external: true as const },
+      { name: '深度研究', href: 'http://localhost:3030', icon: Microscope, external: true as const },
       { name: '播客', href: '/podcasts', icon: Mic },
     ],
   },

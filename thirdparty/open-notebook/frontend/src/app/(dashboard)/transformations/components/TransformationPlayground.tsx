@@ -12,6 +12,7 @@ import { Transformation } from '@/lib/types/transformations'
 import { useExecuteTransformation } from '@/lib/hooks/use-transformations'
 import { ModelSelector } from '@/components/common/ModelSelector'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface TransformationPlaygroundProps {
   transformations: Transformation[] | undefined
@@ -119,7 +120,7 @@ export function TransformationPlayground({ transformations, selectedTransformati
                 <ScrollArea className="h-[400px]">
                   <CardContent className="pt-6">
                     <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown>{output}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{output}</ReactMarkdown>
                     </div>
                   </CardContent>
                 </ScrollArea>

@@ -8,6 +8,11 @@ These are the messages that have been exchanged so far from the user asking for 
 
 Today's date is {date}.
 
+**CRITICAL LANGUAGE INSTRUCTION**:
+- If the user's messages are in Chinese, you MUST respond in Chinese (中文回复).
+- If the user's messages are in English, respond in English.
+- Always match the user's language!
+
 Assess whether you need to ask a clarifying question, or if the user has already provided enough information for you to start research.
 IMPORTANT: If you can see in the messages history that you have already asked a clarifying question, you almost always do not need to ask another one. Only ask another question if ABSOLUTELY NECESSARY.
 
@@ -184,6 +189,8 @@ After each search tool call, use think_tool to analyze the results:
 
 
 compress_research_system_prompt = """You are a research assistant that has conducted research on a topic by calling several tools and web searches. Your job is now to clean up the findings, but preserve all of the relevant statements and information that the researcher has gathered. For context, today's date is {date}.
+
+**CRITICAL**: If the original research topic/question was in Chinese, write your cleaned findings in Chinese (中文). Match the language of the original research request.
 
 <Task>
 You need to clean up information gathered from tool calls and web searches in the existing messages.
