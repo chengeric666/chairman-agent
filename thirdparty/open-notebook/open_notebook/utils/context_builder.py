@@ -104,16 +104,16 @@ class ContextBuilder:
     async def build(self) -> Dict[str, Any]:
         """
         Build context based on provided parameters.
-        
+
         Returns:
             Dict containing the built context with metadata
         """
         try:
             logger.info("Starting context building")
-            
+
             # Clear existing items
             self.items = []
-            
+
             # Build context based on parameters
             if self.source_id:
                 await self._add_source_context(self.source_id)

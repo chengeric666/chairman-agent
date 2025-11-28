@@ -18,7 +18,7 @@ import { ModelSelector } from './ModelSelector'
 import { ContextIndicator } from '@/components/common/ContextIndicator'
 import { SessionManager } from '@/components/source/SessionManager'
 import { MessageActions } from '@/components/source/MessageActions'
-import { convertReferencesToCompactMarkdown, createCompactReferenceLinkComponent } from '@/lib/utils/source-references'
+import { convertReferencesToCompactMarkdown, createCompactReferenceLinkComponent, ReferenceTitleMap } from '@/lib/utils/source-references'
 import { useModalManager } from '@/lib/hooks/use-modal-manager'
 import { toast } from 'sonner'
 
@@ -52,6 +52,8 @@ interface ChatPanelProps {
   notebookContextStats?: NotebookContextStats
   // Notebook ID for saving notes
   notebookId?: string
+  // Title map for reference display (maps source/note IDs to titles)
+  referenceTitleMap?: ReferenceTitleMap
 }
 
 export function ChatPanel({
@@ -71,7 +73,8 @@ export function ChatPanel({
   title = 'Chat with Source',
   contextType = 'source',
   notebookContextStats,
-  notebookId
+  notebookId,
+  referenceTitleMap
 }: ChatPanelProps) {
   const [input, setInput] = useState('')
   const [sessionManagerOpen, setSessionManagerOpen] = useState(false)
@@ -198,6 +201,7 @@ export function ChatPanel({
                         <AIMessageContent
                           content={message.content}
                           onReferenceClick={handleReferenceClick}
+                          titleMap={referenceTitleMap}
                         />
                       ) : (
                         <p className="text-sm break-words overflow-wrap-anywhere">{message.content}</p>
@@ -321,13 +325,16 @@ export function ChatPanel({
 // Helper component to render AI messages with clickable references
 function AIMessageContent({
   content,
-  onReferenceClick
+  onReferenceClick,
+  titleMap
 }: {
   content: string
   onReferenceClick: (type: string, id: string) => void
+  titleMap?: ReferenceTitleMap
 }) {
   // Convert references to compact markdown with numbered citations
-  const markdownWithCompactRefs = convertReferencesToCompactMarkdown(content)
+  // 传入 titleMap 以显示友好的标题而非 ID
+  const markdownWithCompactRefs = convertReferencesToCompactMarkdown(content, titleMap)
 
   // Create custom link component for compact references
   const LinkComponent = createCompactReferenceLinkComponent(onReferenceClick)
@@ -347,6 +354,39 @@ function AIMessageContent({
           li: ({ children }) => <li className="mb-1">{children}</li>,
           ul: ({ children }) => <ul className="mb-4 space-y-1">{children}</ul>,
           ol: ({ children }) => <ol className="mb-4 space-y-1">{children}</ol>,
+          // 表格渲染优化：使用响应式表格容器，支持横向滚动
+          table: ({ children }) => (
+            <div className="overflow-x-auto my-4 rounded-lg border border-border">
+              <table className="min-w-full divide-y divide-border text-sm">
+                {children}
+              </table>
+            </div>
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-muted/50">
+              {children}
+            </thead>
+          ),
+          tbody: ({ children }) => (
+            <tbody className="divide-y divide-border bg-background">
+              {children}
+            </tbody>
+          ),
+          tr: ({ children }) => (
+            <tr className="hover:bg-muted/30 transition-colors">
+              {children}
+            </tr>
+          ),
+          th: ({ children }) => (
+            <th className="px-4 py-3 text-left font-semibold text-foreground whitespace-nowrap">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="px-4 py-3 text-muted-foreground">
+              {children}
+            </td>
+          ),
         }}
       >
         {markdownWithCompactRefs}

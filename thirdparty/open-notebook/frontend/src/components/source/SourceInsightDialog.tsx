@@ -44,14 +44,52 @@ export function SourceInsightDialog({ open, onOpenChange, insight }: SourceInsig
         <div className="flex-1 overflow-y-auto min-h-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-10">
-              <span className="text-sm text-muted-foreground">Loading insight…</span>
+              <span className="text-sm text-muted-foreground">加载中…</span>
             </div>
           ) : displayInsight ? (
             <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none">
-              <ReactMarkdown>{displayInsight.content}</ReactMarkdown>
+              <ReactMarkdown
+                components={{
+                  // 表格渲染优化：使用响应式表格容器，支持横向滚动
+                  table: ({ children }) => (
+                    <div className="overflow-x-auto my-4 rounded-lg border border-border">
+                      <table className="min-w-full divide-y divide-border text-sm">
+                        {children}
+                      </table>
+                    </div>
+                  ),
+                  thead: ({ children }) => (
+                    <thead className="bg-muted/50">
+                      {children}
+                    </thead>
+                  ),
+                  tbody: ({ children }) => (
+                    <tbody className="divide-y divide-border bg-background">
+                      {children}
+                    </tbody>
+                  ),
+                  tr: ({ children }) => (
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      {children}
+                    </tr>
+                  ),
+                  th: ({ children }) => (
+                    <th className="px-4 py-3 text-left font-semibold text-foreground whitespace-nowrap">
+                      {children}
+                    </th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {children}
+                    </td>
+                  ),
+                }}
+              >
+                {displayInsight.content}
+              </ReactMarkdown>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No insight selected.</p>
+            <p className="text-sm text-muted-foreground">未选择洞见。</p>
           )}
         </div>
       </DialogContent>

@@ -1,13 +1,16 @@
 'use client'
 
 import { useRouter, useParams } from 'next/navigation'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import { useSourceChat } from '@/lib/hooks/useSourceChat'
 import { ChatPanel } from '@/components/source/ChatPanel'
 import { useNavigation } from '@/lib/hooks/use-navigation'
 import { SourceDetailContent } from '@/components/source/SourceDetailContent'
+import { sourcesApi } from '@/lib/api/sources'
+import { ReferenceTitleMap } from '@/lib/utils/source-references'
 
 export default function SourceDetailPage() {
   const router = useRouter()
@@ -17,6 +20,23 @@ export default function SourceDetailPage() {
 
   // Initialize source chat
   const chat = useSourceChat(sourceId)
+
+  // Fetch source to get title for reference display
+  const { data: source } = useQuery({
+    queryKey: ['source', sourceId],
+    queryFn: () => sourcesApi.get(sourceId),
+    enabled: !!sourceId
+  })
+
+  // Build reference title map for friendly display
+  // 将 source ID 映射到标题，用于在引用列表中显示友好名称
+  const referenceTitleMap: ReferenceTitleMap = useMemo(() => {
+    if (!source?.title) return {}
+    return {
+      [sourceId]: source.title,
+      [`source:${sourceId.replace('source:', '')}`]: source.title
+    }
+  }, [source?.title, sourceId])
 
   const handleBack = useCallback(() => {
     const returnPath = navigation.getReturnPath()
@@ -70,6 +90,7 @@ export default function SourceDetailPage() {
             onUpdateSession={(sessionId, title) => chat.updateSession(sessionId, { title })}
             onDeleteSession={chat.deleteSession}
             loadingSessions={chat.loadingSessions}
+            referenceTitleMap={referenceTitleMap}
           />
         </div>
       </div>
