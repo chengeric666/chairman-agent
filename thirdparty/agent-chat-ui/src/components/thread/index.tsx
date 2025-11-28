@@ -537,22 +537,21 @@ export function Thread() {
                       }
                     }
 
-                    return filteredMessages.map((message, index) => {
+                    const messageElements = filteredMessages.map((message, index) => {
                       const elements: React.ReactNode[] = [];
 
-                      // 在最终报告之前插入研究过程（如果有）
-                      // 条件：1) 开关打开 2) 是最后一条ai消息 3) 有supervisor_messages或正在加载
+                      // 情况1：研究完成后，在最终报告之前显示研究过程
                       if (
                         showProcessMessages &&
                         index === lastAiIndex &&
                         hasFinalReport &&
-                        (supervisorMessages.length > 0 || isLoading)
+                        supervisorMessages.length > 0
                       ) {
                         elements.push(
                           <SupervisorMessagesContainer
                             key="supervisor-messages"
                             messages={supervisorMessages}
-                            isLoading={isLoading}
+                            isLoading={false}
                             handleRegenerate={handleRegenerate}
                           />
                         );
@@ -580,6 +579,25 @@ export function Thread() {
 
                       return elements;
                     });
+
+                    // 情况2：研究进行中（还没有最终报告），在消息列表末尾显示研究过程
+                    if (
+                      showProcessMessages &&
+                      isLoading &&
+                      !hasFinalReport &&
+                      (supervisorMessages.length > 0 || isLoading)
+                    ) {
+                      messageElements.push(
+                        <SupervisorMessagesContainer
+                          key="supervisor-messages-loading"
+                          messages={supervisorMessages}
+                          isLoading={true}
+                          handleRegenerate={handleRegenerate}
+                        />
+                      );
+                    }
+
+                    return messageElements;
                   })()}
                   {/* Special rendering case where there are no AI/tool messages, but there is an interrupt.
                     We need to render it outside of the messages list, since there are no messages to render */}
@@ -591,7 +609,8 @@ export function Thread() {
                       handleRegenerate={handleRegenerate}
                     />
                   )}
-                  {isLoading && !firstTokenReceived && (
+                  {/* 只有在没有显示研究过程组件时才显示通用加载提示 */}
+                  {isLoading && !firstTokenReceived && !showProcessMessages && (
                     <AssistantMessageLoading />
                   )}
                 </>
