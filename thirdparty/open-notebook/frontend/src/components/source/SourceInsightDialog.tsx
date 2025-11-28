@@ -50,6 +50,87 @@ export function SourceInsightDialog({ open, onOpenChange, insight }: SourceInsig
             <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none">
               <ReactMarkdown
                 components={{
+                  // 标题渲染：清晰的层级结构
+                  h1: ({ children }) => (
+                    <h1 className="text-2xl font-bold text-foreground mt-6 mb-4 pb-2 border-b border-border">
+                      {children}
+                    </h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="text-xl font-semibold text-foreground mt-5 mb-3">
+                      {children}
+                    </h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">
+                      {children}
+                    </h3>
+                  ),
+                  h4: ({ children }) => (
+                    <h4 className="text-base font-medium text-foreground mt-3 mb-2">
+                      {children}
+                    </h4>
+                  ),
+                  // 列表渲染优化
+                  ul: ({ children }) => (
+                    <ul className="list-disc list-outside pl-6 my-3 space-y-1.5">
+                      {children}
+                    </ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="list-decimal list-outside pl-6 my-3 space-y-1.5">
+                      {children}
+                    </ol>
+                  ),
+                  li: ({ children }) => (
+                    <li className="text-muted-foreground leading-relaxed">
+                      {children}
+                    </li>
+                  ),
+                  // 段落和强调
+                  p: ({ children }) => (
+                    <p className="my-3 leading-relaxed text-muted-foreground">
+                      {children}
+                    </p>
+                  ),
+                  strong: ({ children }) => (
+                    <strong className="font-semibold text-foreground">
+                      {children}
+                    </strong>
+                  ),
+                  em: ({ children }) => (
+                    <em className="italic text-muted-foreground">
+                      {children}
+                    </em>
+                  ),
+                  // 引用块
+                  blockquote: ({ children }) => (
+                    <blockquote className="border-l-4 border-primary/30 pl-4 my-4 italic text-muted-foreground bg-muted/20 py-2 rounded-r">
+                      {children}
+                    </blockquote>
+                  ),
+                  // 代码块
+                  code: ({ children, className }) => {
+                    const isInline = !className
+                    return isInline ? (
+                      <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-foreground">
+                        {children}
+                      </code>
+                    ) : (
+                      <code className="block bg-muted p-4 rounded-lg text-sm font-mono overflow-x-auto">
+                        {children}
+                      </code>
+                    )
+                  },
+                  pre: ({ children }) => (
+                    <pre className="my-4 overflow-x-auto">
+                      {children}
+                    </pre>
+                  ),
+                  // 分隔线
+                  hr: () => (
+                    <hr className="my-6 border-border" />
+                  ),
                   // 表格渲染优化：使用响应式表格容器，支持横向滚动
                   table: ({ children }) => (
                     <div className="overflow-x-auto my-4 rounded-lg border border-border">

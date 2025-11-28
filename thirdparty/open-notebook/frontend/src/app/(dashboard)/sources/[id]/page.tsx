@@ -10,6 +10,7 @@ import { ChatPanel } from '@/components/source/ChatPanel'
 import { useNavigation } from '@/lib/hooks/use-navigation'
 import { SourceDetailContent } from '@/components/source/SourceDetailContent'
 import { sourcesApi } from '@/lib/api/sources'
+import { insightsApi } from '@/lib/api/insights'
 import { ReferenceTitleMap } from '@/lib/utils/source-references'
 
 export default function SourceDetailPage() {
@@ -28,15 +29,36 @@ export default function SourceDetailPage() {
     enabled: !!sourceId
   })
 
+  // Fetch insights for this source to map their titles
+  const { data: insights } = useQuery({
+    queryKey: ['insights', sourceId],
+    queryFn: () => insightsApi.listForSource(sourceId),
+    enabled: !!sourceId
+  })
+
   // Build reference title map for friendly display
-  // 将 source ID 映射到标题，用于在引用列表中显示友好名称
+  // 将 source ID 和 source_insight ID 映射到标题，用于在引用列表中显示友好名称
   const referenceTitleMap: ReferenceTitleMap = useMemo(() => {
-    if (!source?.title) return {}
-    return {
-      [sourceId]: source.title,
-      [`source:${sourceId.replace('source:', '')}`]: source.title
+    const map: ReferenceTitleMap = {}
+
+    // 1. 映射 source 标题
+    if (source?.title) {
+      map[sourceId] = source.title
+      map[`source:${sourceId.replace('source:', '')}`] = source.title
     }
-  }, [source?.title, sourceId])
+
+    // 2. 映射所有 insight 标题（用 insight_type 作为显示名称）
+    if (insights && Array.isArray(insights)) {
+      insights.forEach((insight: { id: string; insight_type?: string }) => {
+        const insightId = insight.id.replace('source_insight:', '')
+        // 使用 insight_type（如 "核心洞见"、"精炼摘要"）作为显示标题
+        map[`source_insight:${insightId}`] = insight.insight_type || '洞察'
+        map[insight.id] = insight.insight_type || '洞察'
+      })
+    }
+
+    return map
+  }, [source?.title, sourceId, insights])
 
   const handleBack = useCallback(() => {
     const returnPath = navigation.getReturnPath()
