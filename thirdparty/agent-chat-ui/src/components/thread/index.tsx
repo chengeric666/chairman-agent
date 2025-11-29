@@ -90,96 +90,125 @@ function ScrollToBottom(props: { className?: string }) {
   );
 }
 
-// 研究过程折叠容器 - 采用 Human Interrupt 卡片样式
+// 研究阶段类型 - 状态机驱动
+type ResearchPhase = 'starting' | 'researching' | 'completed';
+
+// 研究过程容器 - 状态机驱动的单一组件
 function SupervisorMessagesContainer({
   messages,
-  isLoading,
+  phase,
   handleRegenerate,
 }: {
   messages: Message[];
-  isLoading: boolean;
+  phase: ResearchPhase;
   handleRegenerate: (parentCheckpoint: Checkpoint | null | undefined) => void;
 }) {
-  const [isExpanded, setIsExpanded] = useState(false); // 默认收起，完成后研究过程可折叠查看
+  const [isExpanded, setIsExpanded] = useState(false); // 仅 completed 阶段使用
 
-  // 研究进行中但还没有 supervisor_messages
-  if (!messages || messages.length === 0) {
-    if (isLoading) {
-      return (
-        <div className="overflow-hidden rounded-lg border border-border">
-          <div className="border-b border-border bg-muted/50 px-4 py-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="font-medium text-foreground">研究过程</h3>
-              <span className="text-sm text-primary">进行中...</span>
-            </div>
-          </div>
-          <div className="bg-muted/30 p-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <LoaderCircle className="w-4 h-4 animate-spin" />
-              <span>正在研究中...</span>
-            </div>
+  // ========== STARTING 阶段 ==========
+  // 简洁的"研究进行中"卡片，无展开按钮
+  if (phase === 'starting') {
+    return (
+      <div className="overflow-hidden rounded-lg border border-border">
+        <div className="bg-muted/50 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <LoaderCircle className="w-4 h-4 animate-spin text-primary" />
+            <span className="font-medium text-foreground">研究过程</span>
+            <span className="text-sm text-primary">启动中...</span>
           </div>
         </div>
-      );
-    }
-    return null;
-  }
-
-  return (
-    <div className="overflow-hidden rounded-lg border border-border">
-      {/* 卡片头部 - Human Interrupt 样式 */}
-      <div className="border-b border-border bg-muted/50 px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-medium text-foreground">研究过程</h3>
-          {isLoading && <span className="text-sm text-primary">进行中...</span>}
+        <div className="bg-muted/30 p-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>正在准备研究环境...</span>
+          </div>
         </div>
       </div>
+    );
+  }
 
-      {/* 内容区域 */}
-      <div className="bg-muted/30">
-        {isExpanded ? (
-          // 展开内容 - Timeline 样式
-          <div className="p-4">
-            <div className="relative pl-6 ml-3 border-l-2 border-primary/30">
-              <div className="space-y-4">
-                {messages.map((message, index) => (
-                  <div key={`supervisor-msg-${index}-${message.id || 'no-id'}`} className="relative">
-                    {/* Timeline 圆点指示器 */}
-                    <div className="absolute -left-[33px] top-3 w-4 h-4 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    </div>
-                    {/* 消息内容 */}
-                    <AssistantMessage
-                      message={message}
-                      isLoading={isLoading && index === messages.length - 1}
-                      handleRegenerate={handleRegenerate}
-                    />
+  // ========== RESEARCHING 阶段 ==========
+  // 固定头部 + 动态 Timeline（始终展开，不可折叠）
+  if (phase === 'researching') {
+    return (
+      <div className="overflow-hidden rounded-lg border border-border">
+        {/* 固定头部 */}
+        <div className="border-b border-border bg-muted/50 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <LoaderCircle className="w-4 h-4 animate-spin text-primary" />
+            <span className="font-medium text-foreground">研究过程</span>
+            <span className="text-sm text-primary">进行中...</span>
+          </div>
+        </div>
+        {/* 始终展开的 Timeline 内容 */}
+        <div className="p-4 bg-muted/30">
+          <div className="relative pl-6 ml-3 border-l-2 border-primary/30">
+            <div className="space-y-4">
+              {messages.map((message, index) => (
+                <div key={`supervisor-msg-${index}-${message.id || 'no-id'}`} className="relative">
+                  {/* Timeline 圆点指示器 */}
+                  <div className="absolute -left-[33px] top-3 w-4 h-4 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                   </div>
-                ))}
-                {/* 加载中指示器 */}
-                {isLoading && (
-                  <div className="relative">
-                    <div className="absolute -left-[33px] top-2 w-4 h-4 rounded-full bg-primary animate-pulse" />
-                    <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
-                      <LoaderCircle className="w-4 h-4 animate-spin" />
-                      <span>正在研究中...</span>
-                    </div>
-                  </div>
-                )}
+                  {/* 消息内容 */}
+                  <AssistantMessage
+                    message={message}
+                    isLoading={false}
+                    handleRegenerate={handleRegenerate}
+                  />
+                </div>
+              ))}
+              {/* 加载中指示器 - 始终显示在末尾 */}
+              <div className="relative">
+                <div className="absolute -left-[33px] top-2 w-4 h-4 rounded-full bg-primary animate-pulse" />
+                <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+                  <LoaderCircle className="w-4 h-4 animate-spin" />
+                  <span>正在研究中...</span>
+                </div>
               </div>
             </div>
           </div>
-        ) : (
-          // 收起时显示摘要
-          <div className="p-4">
-            <p className="text-sm text-muted-foreground">
-              共 {messages.length} 条研究记录
-            </p>
-          </div>
-        )}
+        </div>
+      </div>
+    );
+  }
+
+  // ========== COMPLETED 阶段 ==========
+  // 可折叠的完整历史框（默认收起）
+  return (
+    <div className="overflow-hidden rounded-lg border border-border">
+      {/* 卡片头部 */}
+      <div className="border-b border-border bg-muted/50 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <span className="font-medium text-foreground">研究过程</span>
+          <span className="text-sm text-muted-foreground">共 {messages.length} 条研究记录</span>
+        </div>
       </div>
 
-      {/* 底部展开/收起按钮 - Human Interrupt 样式 */}
+      {/* 内容区域 - 仅展开时显示 */}
+      {isExpanded && (
+        <div className="p-4 bg-muted/30">
+          <div className="relative pl-6 ml-3 border-l-2 border-primary/30">
+            <div className="space-y-4">
+              {messages.map((message, index) => (
+                <div key={`supervisor-msg-${index}-${message.id || 'no-id'}`} className="relative">
+                  {/* Timeline 圆点指示器 - 绿色表示已完成 */}
+                  <div className="absolute -left-[33px] top-3 w-4 h-4 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  </div>
+                  {/* 消息内容 */}
+                  <AssistantMessage
+                    message={message}
+                    isLoading={false}
+                    handleRegenerate={handleRegenerate}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 底部展开/收起按钮 */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="flex w-full cursor-pointer items-center justify-center border-t border-border py-2 text-muted-foreground transition-all duration-200 ease-in-out hover:bg-muted/50 hover:text-foreground"
@@ -537,21 +566,33 @@ export function Thread() {
                       }
                     }
 
+                    // ========== 状态机驱动的研究阶段计算 ==========
+                    // 统一计算当前研究阶段，避免多个独立条件分支的状态混乱
+                    const researchPhase: ResearchPhase | null = (() => {
+                      if (!showProcessMessages) return null;
+                      // COMPLETED: 研究已完成（有最终报告，不在加载中）
+                      if (!isLoading && hasFinalReport && supervisorMessages.length > 0) return 'completed';
+                      // RESEARCHING: 研究进行中（有supervisor消息正在生成）
+                      if (isLoading && supervisorMessages.length > 0) return 'researching';
+                      // STARTING: 研究刚开始（正在加载但还没有supervisor消息）
+                      if (isLoading && supervisorMessages.length === 0) return 'starting';
+                      return null;
+                    })();
+
                     const messageElements = filteredMessages.map((message, index) => {
                       const elements: React.ReactNode[] = [];
 
-                      // 情况1：研究完成后，在最终报告之前显示研究过程
+                      // 研究完成后，在最终报告之前显示研究过程（可折叠）
                       if (
-                        showProcessMessages &&
+                        researchPhase === 'completed' &&
                         index === lastAiIndex &&
-                        hasFinalReport &&
                         supervisorMessages.length > 0
                       ) {
                         elements.push(
                           <SupervisorMessagesContainer
-                            key="supervisor-messages"
+                            key="supervisor-messages-completed"
                             messages={supervisorMessages}
-                            isLoading={false}
+                            phase="completed"
                             handleRegenerate={handleRegenerate}
                           />
                         );
@@ -580,18 +621,13 @@ export function Thread() {
                       return elements;
                     });
 
-                    // 情况2：研究进行中（还没有最终报告），在消息列表末尾显示研究过程
-                    if (
-                      showProcessMessages &&
-                      isLoading &&
-                      !hasFinalReport &&
-                      (supervisorMessages.length > 0 || isLoading)
-                    ) {
+                    // 研究进行中（starting 或 researching）：在消息列表末尾显示研究过程
+                    if (researchPhase === 'starting' || researchPhase === 'researching') {
                       messageElements.push(
                         <SupervisorMessagesContainer
-                          key="supervisor-messages-loading"
+                          key="supervisor-messages-in-progress"
                           messages={supervisorMessages}
-                          isLoading={true}
+                          phase={researchPhase}
                           handleRegenerate={handleRegenerate}
                         />
                       );
