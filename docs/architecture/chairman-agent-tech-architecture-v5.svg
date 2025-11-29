@@ -1,0 +1,1282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2200 980" font-family="'Microsoft YaHei', 'PingFang SC', 'SF Pro Display', -apple-system, sans-serif">
+  <defs>
+    <!-- 渐变定义 -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc"/>
+      <stop offset="100%" style="stop-color:#e2e8f0"/>
+    </linearGradient>
+
+    <linearGradient id="frontendGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#1d4ed8"/>
+    </linearGradient>
+
+    <linearGradient id="backendGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981"/>
+      <stop offset="100%" style="stop-color:#059669"/>
+    </linearGradient>
+
+    <linearGradient id="aiGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#6d28d9"/>
+    </linearGradient>
+
+    <linearGradient id="dataGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#d97706"/>
+    </linearGradient>
+
+    <linearGradient id="infraGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#64748b"/>
+      <stop offset="100%" style="stop-color:#475569"/>
+    </linearGradient>
+
+    <linearGradient id="authGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#22c55e"/>
+      <stop offset="100%" style="stop-color:#16a34a"/>
+    </linearGradient>
+
+    <linearGradient id="langsmithGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f97316"/>
+      <stop offset="100%" style="stop-color:#ea580c"/>
+    </linearGradient>
+
+    <linearGradient id="i18nGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ef4444"/>
+      <stop offset="100%" style="stop-color:#dc2626"/>
+    </linearGradient>
+
+    <!-- 阴影效果 -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.1"/>
+    </filter>
+
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+
+    <!-- 箭头标记 -->
+    <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L0,8 L8,4 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L0,8 L8,4 z" fill="#10b981"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L0,8 L8,4 z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L0,8 L8,4 z" fill="#f59e0b"/>
+    </marker>
+    <marker id="arrowPink" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L0,8 L8,4 z" fill="#ec4899"/>
+    </marker>
+    <marker id="arrowCyan" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L0,8 L8,4 z" fill="#06b6d4"/>
+    </marker>
+    <marker id="arrowAuthGreen" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L0,8 L8,4 z" fill="#22c55e"/>
+    </marker>
+    <marker id="arrowGray" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L0,8 L8,4 z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="2200" height="980" fill="url(#bgGradient)"/>
+
+  <!-- 网格背景 -->
+  <g opacity="0.03">
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#000" stroke-width="1"/>
+    </pattern>
+    <rect width="2200" height="980" fill="url(#grid)"/>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 标题区域 -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <g transform="translate(420, 28)">
+    <text x="0" y="0" text-anchor="middle" font-size="28" font-weight="700" fill="#1e293b">
+      智董 Chairman-Agent 技术架构全景图 v5
+    </text>
+    <text x="0" y="22" text-anchor="middle" font-size="12" fill="#64748b">
+      Open-Notebook + OpenCanvas + OpenDeepResearch + Agent-Chat-UI | 完整数据流连线
+    </text>
+  </g>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 左侧主图：8层架构 (严格网格对齐) -->
+  <!-- 层标签x=20，组件起始x=130，统一间距 -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+
+  <!-- 第一层：用户交互层 (y=65) -->
+  <g transform="translate(20, 65)">
+    <rect x="0" y="0" width="105" height="28" rx="14" fill="#0ea5e9" filter="url(#softShadow)"/>
+    <text x="52" y="19" text-anchor="middle" font-size="11" font-weight="600" fill="white">用户交互层</text>
+
+    <g transform="translate(115, -3)">
+      <rect x="0" y="0" width="80" height="36" rx="6" fill="white" stroke="#e2e8f0" stroke-width="1" filter="url(#softShadow)"/>
+      <text x="40" y="15" text-anchor="middle" font-size="10" font-weight="600" fill="#334155">🖥️ 浏览器</text>
+      <text x="40" y="28" text-anchor="middle" font-size="8" fill="#64748b">Chrome/Safari</text>
+    </g>
+
+    <g transform="translate(205, -3)">
+      <rect x="0" y="0" width="210" height="36" rx="6" fill="white" stroke="#0ea5e9" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="210" height="20" rx="6" fill="#0ea5e9"/>
+      <rect x="0" y="14" width="210" height="6" fill="#0ea5e9"/>
+      <text x="105" y="14" text-anchor="middle" font-size="9" font-weight="600" fill="white">📋 Open-Notebook 统一导航菜单</text>
+      <text x="105" y="30" text-anchor="middle" font-size="7" fill="#64748b">来源管理 | 笔记本 | 开智创作 | 深度研究 | 播客</text>
+    </g>
+
+    <g transform="translate(425, -3)">
+      <rect x="0" y="0" width="100" height="36" rx="6" fill="white" stroke="#22c55e" stroke-width="1" filter="url(#softShadow)"/>
+      <rect x="0" y="0" width="100" height="20" rx="6" fill="#22c55e"/>
+      <rect x="0" y="14" width="100" height="6" fill="#22c55e"/>
+      <text x="50" y="14" text-anchor="middle" font-size="9" font-weight="600" fill="white">📊 业务流</text>
+      <text x="50" y="30" text-anchor="middle" font-size="7" fill="#64748b">上传→分析→创作</text>
+    </g>
+
+    <g transform="translate(535, -3)">
+      <rect x="0" y="0" width="80" height="36" rx="6" fill="white" stroke="#64748b" stroke-width="1" filter="url(#softShadow)"/>
+      <text x="40" y="15" text-anchor="middle" font-size="10" font-weight="600" fill="#334155">🔌 API</text>
+      <text x="40" y="28" text-anchor="middle" font-size="8" fill="#64748b">REST/WS/SSE</text>
+    </g>
+  </g>
+
+  <!-- 层间连线 -->
+  <g opacity="0.6">
+    <path d="M 220 98 L 220 115" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#arrowBlue)"/>
+    <path d="M 380 98 L 380 115" stroke="#ec4899" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#arrowPink)"/>
+    <path d="M 540 98 L 540 115" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#arrowCyan)"/>
+  </g>
+
+  <!-- 第二层：前端应用层 (y=130) -->
+  <g transform="translate(20, 130)">
+    <rect x="0" y="0" width="105" height="28" rx="14" fill="url(#frontendGrad)" filter="url(#softShadow)"/>
+    <text x="52" y="19" text-anchor="middle" font-size="11" font-weight="600" fill="white">前端应用层</text>
+
+    <!-- Open-Notebook UI -->
+    <g transform="translate(115, -8)">
+      <rect x="0" y="0" width="155" height="115" rx="8" fill="white" stroke="#3b82f6" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="155" height="26" rx="8" fill="#3b82f6"/>
+      <rect x="0" y="18" width="155" height="8" fill="#3b82f6"/>
+      <text x="77" y="18" text-anchor="middle" font-size="10" font-weight="600" fill="white">📚 Open-Notebook :8502</text>
+
+      <g transform="translate(8, 32)">
+        <rect x="0" y="0" width="65" height="22" rx="3" fill="#dbeafe" stroke="#93c5fd"/>
+        <text x="32" y="10" text-anchor="middle" font-size="7" font-weight="600" fill="#1e40af">Next.js 15.4</text>
+        <text x="32" y="19" text-anchor="middle" font-size="6" fill="#3b82f6">React 19</text>
+      </g>
+      <g transform="translate(82, 32)">
+        <rect x="0" y="0" width="65" height="22" rx="3" fill="#dbeafe" stroke="#93c5fd"/>
+        <text x="32" y="10" text-anchor="middle" font-size="7" font-weight="600" fill="#1e40af">Radix UI</text>
+        <text x="32" y="19" text-anchor="middle" font-size="6" fill="#3b82f6">Tailwind 4</text>
+      </g>
+
+      <g transform="translate(8, 60)">
+        <rect x="0" y="0" width="42" height="18" rx="2" fill="#fefce8" stroke="#fef08a"/>
+        <text x="21" y="12" text-anchor="middle" font-size="6" fill="#854d0e">洞察模板</text>
+      </g>
+      <g transform="translate(55, 60)">
+        <rect x="0" y="0" width="50" height="18" rx="2" fill="#fefce8" stroke="#fef08a"/>
+        <text x="25" y="12" text-anchor="middle" font-size="6" fill="#854d0e">InsightReader</text>
+      </g>
+      <g transform="translate(110, 60)">
+        <rect x="0" y="0" width="38" height="18" rx="2" fill="#faf5ff" stroke="#e9d5ff"/>
+        <text x="19" y="12" text-anchor="middle" font-size="6" fill="#7c3aed">Zustand</text>
+      </g>
+
+      <g transform="translate(8, 85)">
+        <rect x="0" y="0" width="140" height="18" rx="2" fill="#f8fafc" stroke="#e2e8f0"/>
+        <text x="70" y="12" text-anchor="middle" font-size="6" fill="#64748b">Monaco • React Query • MarkdownRenderer</text>
+      </g>
+    </g>
+
+    <!-- OpenCanvas Web -->
+    <g transform="translate(280, -8)">
+      <rect x="0" y="0" width="140" height="115" rx="8" fill="white" stroke="#ec4899" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="140" height="26" rx="8" fill="#ec4899"/>
+      <rect x="0" y="18" width="140" height="8" fill="#ec4899"/>
+      <text x="70" y="18" text-anchor="middle" font-size="10" font-weight="600" fill="white">🎨 OpenCanvas :8080</text>
+
+      <g transform="translate(8, 32)">
+        <rect x="0" y="0" width="58" height="22" rx="3" fill="#fce7f3" stroke="#f9a8d4"/>
+        <text x="29" y="10" text-anchor="middle" font-size="7" font-weight="600" fill="#9d174d">Next.js 14</text>
+        <text x="29" y="19" text-anchor="middle" font-size="6" fill="#be185d">React 18</text>
+      </g>
+      <g transform="translate(74, 32)">
+        <rect x="0" y="0" width="58" height="22" rx="3" fill="#fce7f3" stroke="#f9a8d4"/>
+        <text x="29" y="10" text-anchor="middle" font-size="7" font-weight="600" fill="#9d174d">BlockNote</text>
+        <text x="29" y="19" text-anchor="middle" font-size="6" fill="#be185d">块编辑器</text>
+      </g>
+
+      <g transform="translate(8, 60)">
+        <rect x="0" y="0" width="58" height="18" rx="2" fill="#fdf2f8" stroke="#fbcfe8"/>
+        <text x="29" y="12" text-anchor="middle" font-size="6" fill="#9d174d">CodeMirror</text>
+      </g>
+      <g transform="translate(74, 60)">
+        <rect x="0" y="0" width="58" height="18" rx="2" fill="#fdf2f8" stroke="#fbcfe8"/>
+        <text x="29" y="12" text-anchor="middle" font-size="6" fill="#9d174d">assistant-ui</text>
+      </g>
+
+      <g transform="translate(8, 85)">
+        <rect x="0" y="0" width="124" height="18" rx="2" fill="#dcfce7" stroke="#86efac"/>
+        <text x="62" y="12" text-anchor="middle" font-size="6" fill="#166534">🔐 NextAuth v5 + Zitadel</text>
+      </g>
+    </g>
+
+    <!-- Agent-Chat-UI -->
+    <g transform="translate(430, -8)">
+      <rect x="0" y="0" width="125" height="115" rx="8" fill="white" stroke="#06b6d4" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="125" height="26" rx="8" fill="#06b6d4"/>
+      <rect x="0" y="18" width="125" height="8" fill="#06b6d4"/>
+      <text x="62" y="18" text-anchor="middle" font-size="10" font-weight="600" fill="white">💬 Chat-UI :3030</text>
+
+      <g transform="translate(8, 32)">
+        <rect x="0" y="0" width="109" height="22" rx="3" fill="#ecfeff" stroke="#a5f3fc"/>
+        <text x="54" y="10" text-anchor="middle" font-size="7" font-weight="600" fill="#0e7490">Next.js 15 + React 19</text>
+        <text x="54" y="19" text-anchor="middle" font-size="6" fill="#0891b2">pnpm • TypeScript 5.7</text>
+      </g>
+
+      <g transform="translate(8, 60)">
+        <rect x="0" y="0" width="50" height="18" rx="2" fill="#cffafe" stroke="#67e8f9"/>
+        <text x="25" y="12" text-anchor="middle" font-size="6" fill="#0e7490">Framer</text>
+      </g>
+      <g transform="translate(67, 60)">
+        <rect x="0" y="0" width="50" height="18" rx="2" fill="#cffafe" stroke="#67e8f9"/>
+        <text x="25" y="12" text-anchor="middle" font-size="6" fill="#0e7490">KaTeX</text>
+      </g>
+
+      <g transform="translate(8, 85)">
+        <rect x="0" y="0" width="109" height="18" rx="2" fill="#f8fafc" stroke="#e2e8f0"/>
+        <text x="54" y="12" text-anchor="middle" font-size="6" fill="#64748b">API Passthrough • SSE</text>
+      </g>
+    </g>
+
+    <!-- 汉化体系 -->
+    <g transform="translate(565, -8)">
+      <rect x="0" y="0" width="125" height="115" rx="8" fill="white" stroke="#ef4444" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="125" height="26" rx="8" fill="url(#i18nGrad)"/>
+      <rect x="0" y="18" width="125" height="8" fill="url(#i18nGrad)"/>
+      <text x="62" y="18" text-anchor="middle" font-size="10" font-weight="600" fill="white">🇨🇳 汉化体系</text>
+
+      <g transform="translate(8, 32)">
+        <rect x="0" y="0" width="109" height="22" rx="3" fill="#fef2f2" stroke="#fecaca"/>
+        <text x="54" y="10" text-anchor="middle" font-size="7" font-weight="600" fill="#b91c1c">HTML lang="zh-CN"</text>
+        <text x="54" y="19" text-anchor="middle" font-size="6" fill="#dc2626">全局中文语言标识</text>
+      </g>
+
+      <g transform="translate(8, 60)">
+        <rect x="0" y="0" width="50" height="18" rx="2" fill="#fee2e2" stroke="#fca5a5"/>
+        <text x="25" y="12" text-anchor="middle" font-size="5" fill="#b91c1c">Noto Sans SC</text>
+      </g>
+      <g transform="translate(67, 60)">
+        <rect x="0" y="0" width="50" height="18" rx="2" fill="#fee2e2" stroke="#fca5a5"/>
+        <text x="25" y="12" text-anchor="middle" font-size="5" fill="#b91c1c">date-fns zhCN</text>
+      </g>
+
+      <g transform="translate(8, 85)">
+        <rect x="0" y="0" width="109" height="18" rx="2" fill="#fff1f2" stroke="#fecdd3"/>
+        <text x="54" y="12" text-anchor="middle" font-size="6" fill="#be123c">董智 - 智能知识管理平台</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- 层间连线 -->
+  <g opacity="0.6">
+    <path d="M 220 237 L 220 260" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arrowAuthGreen)"/>
+    <path d="M 380 237 L 380 260" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arrowAuthGreen)"/>
+    <path d="M 540 237 L 540 260" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arrowAuthGreen)"/>
+  </g>
+
+  <!-- 第三层：认证服务层 (y=275) -->
+  <g transform="translate(20, 275)">
+    <rect x="0" y="0" width="105" height="28" rx="14" fill="url(#authGrad)" filter="url(#softShadow)"/>
+    <text x="52" y="19" text-anchor="middle" font-size="11" font-weight="600" fill="white">认证服务层</text>
+
+    <g transform="translate(115, -8)">
+      <rect x="0" y="0" width="185" height="80" rx="8" fill="white" stroke="#22c55e" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="185" height="24" rx="8" fill="#22c55e"/>
+      <rect x="0" y="16" width="185" height="8" fill="#22c55e"/>
+      <text x="92" y="17" text-anchor="middle" font-size="9" font-weight="600" fill="white">🔐 Zitadel OIDC Provider</text>
+
+      <g transform="translate(8, 30)">
+        <rect x="0" y="0" width="80" height="18" rx="3" fill="#dcfce7" stroke="#86efac"/>
+        <text x="40" y="12" text-anchor="middle" font-size="6" fill="#166534">issuer: zitadel.aotsea.com</text>
+      </g>
+      <g transform="translate(95, 30)">
+        <rect x="0" y="0" width="82" height="18" rx="3" fill="#dcfce7" stroke="#86efac"/>
+        <text x="41" y="12" text-anchor="middle" font-size="6" fill="#166534">clientId: 348526...</text>
+      </g>
+
+      <g transform="translate(8, 54)">
+        <rect x="0" y="0" width="50" height="16" rx="2" fill="#f0fdf4" stroke="#bbf7d0"/>
+        <text x="25" y="11" text-anchor="middle" font-size="6" fill="#22c55e">OIDC</text>
+      </g>
+      <g transform="translate(65, 54)">
+        <rect x="0" y="0" width="55" height="16" rx="2" fill="#f0fdf4" stroke="#bbf7d0"/>
+        <text x="27" y="11" text-anchor="middle" font-size="6" fill="#22c55e">JWT Token</text>
+      </g>
+      <g transform="translate(127, 54)">
+        <rect x="0" y="0" width="50" height="16" rx="2" fill="#f0fdf4" stroke="#bbf7d0"/>
+        <text x="25" y="11" text-anchor="middle" font-size="6" fill="#22c55e">Session</text>
+      </g>
+    </g>
+
+    <g transform="translate(310, -8)">
+      <rect x="0" y="0" width="140" height="80" rx="8" fill="white" stroke="#22c55e" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="140" height="24" rx="8" fill="#16a34a"/>
+      <rect x="0" y="16" width="140" height="8" fill="#16a34a"/>
+      <text x="70" y="17" text-anchor="middle" font-size="9" font-weight="600" fill="white">🔑 NextAuth v5</text>
+
+      <g transform="translate(8, 30)">
+        <rect x="0" y="0" width="124" height="18" rx="3" fill="#dcfce7" stroke="#86efac"/>
+        <text x="62" y="12" text-anchor="middle" font-size="6" fill="#166534">OpenCanvas 认证客户端</text>
+      </g>
+
+      <g transform="translate(8, 54)">
+        <rect x="0" y="0" width="58" height="16" rx="2" fill="#f0fdf4" stroke="#bbf7d0"/>
+        <text x="29" y="11" text-anchor="middle" font-size="6" fill="#22c55e">AuthProvider</text>
+      </g>
+      <g transform="translate(74, 54)">
+        <rect x="0" y="0" width="58" height="16" rx="2" fill="#f0fdf4" stroke="#bbf7d0"/>
+        <text x="29" y="11" text-anchor="middle" font-size="6" fill="#22c55e">UserContext</text>
+      </g>
+    </g>
+
+    <g transform="translate(460, -8)">
+      <rect x="0" y="0" width="125" height="80" rx="8" fill="white" stroke="#0891b2" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="125" height="24" rx="8" fill="#0891b2"/>
+      <rect x="0" y="16" width="125" height="8" fill="#0891b2"/>
+      <text x="62" y="17" text-anchor="middle" font-size="8" font-weight="600" fill="white">🔒 Notebook 认证</text>
+
+      <g transform="translate(8, 30)">
+        <rect x="0" y="0" width="109" height="18" rx="3" fill="#ecfeff" stroke="#a5f3fc"/>
+        <text x="54" y="12" text-anchor="middle" font-size="6" fill="#0e7490">Bearer Token 密码中间件</text>
+      </g>
+
+      <g transform="translate(8, 54)">
+        <rect x="0" y="0" width="109" height="16" rx="2" fill="#cffafe" stroke="#67e8f9"/>
+        <text x="54" y="11" text-anchor="middle" font-size="6" fill="#0e7490">简单认证 (独立系统)</text>
+      </g>
+    </g>
+
+    <g transform="translate(595, -8)">
+      <rect x="0" y="0" width="110" height="80" rx="8" fill="#fefce8" stroke="#fcd34d" stroke-width="1"/>
+      <rect x="0" y="0" width="110" height="22" rx="8" fill="#eab308"/>
+      <rect x="0" y="14" width="110" height="8" fill="#eab308"/>
+      <text x="55" y="16" text-anchor="middle" font-size="8" font-weight="600" fill="white">📋 认证流程</text>
+      <text x="10" y="34" font-size="6" fill="#854d0e">1. Canvas → Zitadel</text>
+      <text x="10" y="46" font-size="6" fill="#854d0e">2. OIDC → JWT</text>
+      <text x="10" y="58" font-size="6" fill="#854d0e">3. NextAuth → Session</text>
+      <text x="10" y="70" font-size="6" fill="#854d0e">4. UserContext</text>
+    </g>
+  </g>
+
+  <!-- 层间连线 -->
+  <g opacity="0.6">
+    <path d="M 207 347 L 207 370" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+    <path d="M 380 347 L 380 370" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+    <path d="M 522 347 L 522 370" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+  </g>
+
+  <!-- 第四层：API网关层 (y=385) -->
+  <g transform="translate(20, 385)">
+    <rect x="0" y="0" width="105" height="28" rx="14" fill="#6366f1" filter="url(#softShadow)"/>
+    <text x="52" y="19" text-anchor="middle" font-size="11" font-weight="600" fill="white">API网关层</text>
+
+    <g transform="translate(115, -8)">
+      <rect x="0" y="0" width="140" height="72" rx="8" fill="white" stroke="#6366f1" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="140" height="22" rx="8" fill="#6366f1"/>
+      <rect x="0" y="14" width="140" height="8" fill="#6366f1"/>
+      <text x="70" y="16" text-anchor="middle" font-size="8" font-weight="600" fill="white">🌐 Chairman API :8001</text>
+
+      <g transform="translate(8, 28)">
+        <rect x="0" y="0" width="124" height="16" rx="2" fill="#eef2ff" stroke="#c7d2fe"/>
+        <text x="62" y="11" text-anchor="middle" font-size="6" fill="#4338ca">FastAPI + Starlette</text>
+      </g>
+      <g transform="translate(8, 48)">
+        <rect x="0" y="0" width="58" height="14" rx="2" fill="#e0e7ff" stroke="#a5b4fc"/>
+        <text x="29" y="10" text-anchor="middle" font-size="5" fill="#4f46e5">Route Handlers</text>
+      </g>
+      <g transform="translate(74, 48)">
+        <rect x="0" y="0" width="58" height="14" rx="2" fill="#e0e7ff" stroke="#a5b4fc"/>
+        <text x="29" y="10" text-anchor="middle" font-size="5" fill="#4f46e5">Middleware</text>
+      </g>
+    </g>
+
+    <g transform="translate(265, -8)">
+      <rect x="0" y="0" width="125" height="72" rx="8" fill="white" stroke="#3b82f6" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="125" height="22" rx="8" fill="#3b82f6"/>
+      <rect x="0" y="14" width="125" height="8" fill="#3b82f6"/>
+      <text x="62" y="16" text-anchor="middle" font-size="8" font-weight="600" fill="white">📡 Notebook API</text>
+
+      <g transform="translate(8, 28)">
+        <rect x="0" y="0" width="109" height="16" rx="2" fill="#dbeafe" stroke="#93c5fd"/>
+        <text x="54" y="11" text-anchor="middle" font-size="6" fill="#1e40af">Next.js Route Handlers</text>
+      </g>
+      <g transform="translate(8, 48)">
+        <rect x="0" y="0" width="109" height="14" rx="2" fill="#eff6ff" stroke="#bfdbfe"/>
+        <text x="54" y="10" text-anchor="middle" font-size="5" fill="#2563eb">/api/sources • /api/insights</text>
+      </g>
+    </g>
+
+    <g transform="translate(400, -8)">
+      <rect x="0" y="0" width="135" height="72" rx="8" fill="white" stroke="#8b5cf6" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="135" height="22" rx="8" fill="#8b5cf6"/>
+      <rect x="0" y="14" width="135" height="8" fill="#8b5cf6"/>
+      <text x="67" y="16" text-anchor="middle" font-size="8" font-weight="600" fill="white">🔀 LangGraph API</text>
+
+      <g transform="translate(8, 28)">
+        <rect x="0" y="0" width="119" height="16" rx="2" fill="#f5f3ff" stroke="#ddd6fe"/>
+        <text x="59" y="11" text-anchor="middle" font-size="6" fill="#6d28d9">API Passthrough (Edge)</text>
+      </g>
+      <g transform="translate(8, 48)">
+        <rect x="0" y="0" width="55" height="14" rx="2" fill="#ede9fe" stroke="#c4b5fd"/>
+        <text x="27" y="10" text-anchor="middle" font-size="5" fill="#7c3aed">HTTP/2 + WS</text>
+      </g>
+      <g transform="translate(72, 48)">
+        <rect x="0" y="0" width="55" height="14" rx="2" fill="#ede9fe" stroke="#c4b5fd"/>
+        <text x="27" y="10" text-anchor="middle" font-size="5" fill="#7c3aed">:54367</text>
+      </g>
+    </g>
+
+    <g transform="translate(545, -8)">
+      <rect x="0" y="0" width="125" height="72" rx="8" fill="white" stroke="#f59e0b" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="125" height="22" rx="8" fill="#f59e0b"/>
+      <rect x="0" y="14" width="125" height="8" fill="#f59e0b"/>
+      <text x="62" y="16" text-anchor="middle" font-size="8" font-weight="600" fill="white">🛡️ 安全控制</text>
+
+      <g transform="translate(8, 28)">
+        <rect x="0" y="0" width="109" height="16" rx="2" fill="#fef3c7" stroke="#fcd34d"/>
+        <text x="54" y="11" text-anchor="middle" font-size="6" fill="#92400e">CORS • Rate Limiting</text>
+      </g>
+      <g transform="translate(8, 48)">
+        <rect x="0" y="0" width="109" height="14" rx="2" fill="#fffbeb" stroke="#fde68a"/>
+        <text x="54" y="10" text-anchor="middle" font-size="5" fill="#b45309">Request Validation</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- 层间连线 -->
+  <g opacity="0.6">
+    <path d="M 185 449 L 185 475" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+    <path d="M 327 449 L 327 475" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+    <path d="M 467 449 L 467 475" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+  </g>
+
+  <!-- 第五层：后端服务层 (y=490) -->
+  <g transform="translate(20, 490)">
+    <rect x="0" y="0" width="105" height="28" rx="14" fill="url(#backendGrad)" filter="url(#softShadow)"/>
+    <text x="52" y="19" text-anchor="middle" font-size="11" font-weight="600" fill="white">后端服务层</text>
+
+    <g transform="translate(115, -10)">
+      <rect x="0" y="0" width="190" height="95" rx="8" fill="white" stroke="#10b981" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="190" height="22" rx="8" fill="#10b981"/>
+      <rect x="0" y="14" width="190" height="8" fill="#10b981"/>
+      <text x="95" y="16" text-anchor="middle" font-size="8" font-weight="600" fill="white">⚙️ Notebook Backend :5055</text>
+
+      <g transform="translate(8, 28)">
+        <rect x="0" y="0" width="55" height="22" rx="2" fill="#dcfce7" stroke="#86efac"/>
+        <text x="27" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#166534">FastAPI</text>
+        <text x="27" y="19" text-anchor="middle" font-size="5" fill="#22c55e">0.104.1+</text>
+      </g>
+      <g transform="translate(68, 28)">
+        <rect x="0" y="0" width="55" height="22" rx="2" fill="#dcfce7" stroke="#86efac"/>
+        <text x="27" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#166534">Pydantic</text>
+        <text x="27" y="19" text-anchor="middle" font-size="5" fill="#22c55e">2.5.2</text>
+      </g>
+      <g transform="translate(128, 28)">
+        <rect x="0" y="0" width="55" height="22" rx="2" fill="#dcfce7" stroke="#86efac"/>
+        <text x="27" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#166534">Uvicorn</text>
+        <text x="27" y="19" text-anchor="middle" font-size="5" fill="#22c55e">ASGI</text>
+      </g>
+
+      <g transform="translate(8, 56)">
+        <rect x="0" y="0" width="40" height="13" rx="1" fill="#f0fdf4" stroke="#bbf7d0"/>
+        <text x="20" y="10" text-anchor="middle" font-size="5" fill="#16a34a">content</text>
+      </g>
+      <g transform="translate(52, 56)">
+        <rect x="0" y="0" width="48" height="13" rx="1" fill="#f0fdf4" stroke="#bbf7d0"/>
+        <text x="24" y="10" text-anchor="middle" font-size="5" fill="#16a34a">NotebookOCR</text>
+      </g>
+      <g transform="translate(104, 56)">
+        <rect x="0" y="0" width="42" height="13" rx="1" fill="#f0fdf4" stroke="#bbf7d0"/>
+        <text x="21" y="10" text-anchor="middle" font-size="5" fill="#16a34a">PaddleOCR</text>
+      </g>
+      <g transform="translate(150, 56)">
+        <rect x="0" y="0" width="32" height="13" rx="1" fill="#f0fdf4" stroke="#bbf7d0"/>
+        <text x="16" y="10" text-anchor="middle" font-size="5" fill="#16a34a">FAISS</text>
+      </g>
+
+      <text x="8" y="82" font-size="5" fill="#64748b">Source | Notebook | Insight | Transformation</text>
+    </g>
+
+    <g transform="translate(315, -10)">
+      <rect x="0" y="0" width="170" height="95" rx="8" fill="white" stroke="#ec4899" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="170" height="22" rx="8" fill="#ec4899"/>
+      <rect x="0" y="14" width="170" height="8" fill="#ec4899"/>
+      <text x="85" y="16" text-anchor="middle" font-size="8" font-weight="600" fill="white">🤖 Canvas Agents :54367</text>
+
+      <g transform="translate(8, 28)">
+        <rect x="0" y="0" width="48" height="22" rx="2" fill="#fce7f3" stroke="#f9a8d4"/>
+        <text x="24" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#9d174d">LangGraph</text>
+        <text x="24" y="19" text-anchor="middle" font-size="5" fill="#be185d">0.4.4 TS</text>
+      </g>
+      <g transform="translate(60, 28)">
+        <rect x="0" y="0" width="52" height="22" rx="2" fill="#fce7f3" stroke="#f9a8d4"/>
+        <text x="26" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#9d174d">LangChain</text>
+        <text x="26" y="19" text-anchor="middle" font-size="5" fill="#be185d">0.3.30</text>
+      </g>
+      <g transform="translate(116, 28)">
+        <rect x="0" y="0" width="46" height="22" rx="2" fill="#fce7f3" stroke="#f9a8d4"/>
+        <text x="23" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#9d174d">Prisma</text>
+        <text x="23" y="19" text-anchor="middle" font-size="5" fill="#be185d">ORM</text>
+      </g>
+
+      <g transform="translate(8, 56)">
+        <rect x="0" y="0" width="154" height="13" rx="1" fill="#fdf2f8" stroke="#fbcfe8"/>
+        <text x="77" y="10" text-anchor="middle" font-size="5" fill="#9d174d">agent | reflection | summarizer | web_search</text>
+      </g>
+
+      <text x="8" y="82" font-size="5" fill="#64748b">KnowledgeBaseClient • UserContext</text>
+    </g>
+
+    <g transform="translate(495, -10)">
+      <rect x="0" y="0" width="195" height="95" rx="8" fill="white" stroke="#06b6d4" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="195" height="22" rx="8" fill="#06b6d4"/>
+      <rect x="0" y="14" width="195" height="8" fill="#06b6d4"/>
+      <text x="97" y="16" text-anchor="middle" font-size="8" font-weight="600" fill="white">🔬 DeepResearch Python</text>
+
+      <g transform="translate(8, 28)">
+        <rect x="0" y="0" width="55" height="22" rx="2" fill="#ecfeff" stroke="#a5f3fc"/>
+        <text x="27" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#0e7490">LangGraph</text>
+        <text x="27" y="19" text-anchor="middle" font-size="5" fill="#0891b2">0.5.4+ Py</text>
+      </g>
+      <g transform="translate(68, 28)">
+        <rect x="0" y="0" width="55" height="22" rx="2" fill="#ecfeff" stroke="#a5f3fc"/>
+        <text x="27" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#0e7490">MCP</text>
+        <text x="27" y="19" text-anchor="middle" font-size="5" fill="#0891b2">多工具</text>
+      </g>
+      <g transform="translate(128, 28)">
+        <rect x="0" y="0" width="60" height="22" rx="2" fill="#fff7ed" stroke="#fed7aa"/>
+        <text x="30" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#c2410c">Supervised</text>
+        <text x="30" y="19" text-anchor="middle" font-size="5" fill="#ea580c">Gunicorn</text>
+      </g>
+
+      <g transform="translate(8, 56)">
+        <rect x="0" y="0" width="179" height="13" rx="1" fill="#cffafe" stroke="#67e8f9"/>
+        <text x="89" y="10" text-anchor="middle" font-size="5" fill="#0e7490">Planning → Research → RAG → Report</text>
+      </g>
+
+      <text x="8" y="82" font-size="5" fill="#64748b">Tavily • Arxiv • Exa • File Reader</text>
+    </g>
+  </g>
+
+  <!-- 层间连线 -->
+  <g opacity="0.6">
+    <path d="M 210 575 L 230 605" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrowPurple)"/>
+    <path d="M 400 575 L 400 605" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrowPurple)"/>
+    <path d="M 592 575 L 572 605" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrowPurple)"/>
+    <rect x="372" y="582" width="55" height="14" rx="2" fill="white" opacity="0.95"/>
+    <text x="400" y="592" text-anchor="middle" font-size="6" fill="#8b5cf6">LLM调用</text>
+  </g>
+
+  <!-- 第六层：AI/LLM层 (y=620) -->
+  <g transform="translate(20, 620)">
+    <rect x="0" y="0" width="105" height="28" rx="14" fill="url(#aiGrad)" filter="url(#softShadow)"/>
+    <text x="52" y="19" text-anchor="middle" font-size="11" font-weight="600" fill="white">AI/LLM 层</text>
+
+    <g transform="translate(115, -10)">
+      <rect x="0" y="0" width="180" height="90" rx="8" fill="white" stroke="#8b5cf6" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="180" height="22" rx="8" fill="#8b5cf6"/>
+      <rect x="0" y="14" width="180" height="8" fill="#8b5cf6"/>
+      <text x="90" y="16" text-anchor="middle" font-size="8" font-weight="600" fill="white">🔗 LangChain + LangGraph</text>
+
+      <g transform="translate(8, 28)">
+        <rect x="0" y="0" width="78" height="22" rx="2" fill="#f5f3ff" stroke="#ddd6fe"/>
+        <text x="39" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#6d28d9">LangChain 0.3.x</text>
+        <text x="39" y="19" text-anchor="middle" font-size="5" fill="#7c3aed">核心框架 Python</text>
+      </g>
+      <g transform="translate(94, 28)">
+        <rect x="0" y="0" width="78" height="22" rx="2" fill="#f5f3ff" stroke="#ddd6fe"/>
+        <text x="39" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#6d28d9">LangGraph</text>
+        <text x="39" y="19" text-anchor="middle" font-size="5" fill="#7c3aed">Py 0.5.4 / TS 0.4.4</text>
+      </g>
+
+      <g transform="translate(8, 56)">
+        <rect x="0" y="0" width="52" height="16" rx="2" fill="#ede9fe" stroke="#c4b5fd"/>
+        <text x="26" y="11" text-anchor="middle" font-size="5" fill="#7c3aed">Prompts</text>
+      </g>
+      <g transform="translate(67, 56)">
+        <rect x="0" y="0" width="52" height="16" rx="2" fill="#ede9fe" stroke="#c4b5fd"/>
+        <text x="26" y="11" text-anchor="middle" font-size="5" fill="#7c3aed">Chains</text>
+      </g>
+      <g transform="translate(126, 56)">
+        <rect x="0" y="0" width="46" height="16" rx="2" fill="#ede9fe" stroke="#c4b5fd"/>
+        <text x="23" y="11" text-anchor="middle" font-size="5" fill="#7c3aed">Agents</text>
+      </g>
+    </g>
+
+    <g transform="translate(305, -10)">
+      <rect x="0" y="0" width="200" height="90" rx="8" fill="white" stroke="#f59e0b" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="200" height="22" rx="8" fill="#f59e0b"/>
+      <rect x="0" y="14" width="200" height="8" fill="#f59e0b"/>
+      <text x="100" y="16" text-anchor="middle" font-size="8" font-weight="600" fill="white">🎯 LLM 调度器 (OpenRouter)</text>
+
+      <g transform="translate(8, 28)">
+        <rect x="0" y="0" width="42" height="22" rx="2" fill="#fef3c7" stroke="#fcd34d"/>
+        <text x="21" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#92400e">Grok</text>
+        <text x="21" y="19" text-anchor="middle" font-size="5" fill="#b45309">主力</text>
+      </g>
+      <g transform="translate(55, 28)">
+        <rect x="0" y="0" width="42" height="22" rx="2" fill="#fef3c7" stroke="#fcd34d"/>
+        <text x="21" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#92400e">OpenAI</text>
+        <text x="21" y="19" text-anchor="middle" font-size="5" fill="#b45309">备选</text>
+      </g>
+      <g transform="translate(102, 28)">
+        <rect x="0" y="0" width="48" height="22" rx="2" fill="#fef3c7" stroke="#fcd34d"/>
+        <text x="24" y="10" text-anchor="middle" font-size="6" font-weight="600" fill="#92400e">Anthropic</text>
+        <text x="24" y="19" text-anchor="middle" font-size="5" fill="#b45309">备选</text>
+      </g>
+      <g transform="translate(155, 28)">
+        <rect x="0" y="0" width="38" height="22" rx="2" fill="#fef3c7" stroke="#fcd34d"/>
+        <text x="19" y="16" text-anchor="middle" font-size="5" fill="#b45309">更多...</text>
+      </g>
+
+      <g transform="translate(8, 56)">
+        <rect x="0" y="0" width="58" height="16" rx="2" fill="#fffbeb" stroke="#fde68a"/>
+        <text x="29" y="11" text-anchor="middle" font-size="5" fill="#b45309">DeepSeek</text>
+      </g>
+      <g transform="translate(72, 56)">
+        <rect x="0" y="0" width="58" height="16" rx="2" fill="#fffbeb" stroke="#fde68a"/>
+        <text x="29" y="11" text-anchor="middle" font-size="5" fill="#b45309">Gemini</text>
+      </g>
+      <g transform="translate(136, 56)">
+        <rect x="0" y="0" width="58" height="16" rx="2" fill="#fffbeb" stroke="#fde68a"/>
+        <text x="29" y="11" text-anchor="middle" font-size="5" fill="#b45309">Mistral</text>
+      </g>
+    </g>
+
+    <g transform="translate(515, -10)">
+      <rect x="0" y="0" width="85" height="90" rx="8" fill="white" stroke="#64748b" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="85" height="22" rx="8" fill="#64748b"/>
+      <rect x="0" y="14" width="85" height="8" fill="#64748b"/>
+      <text x="42" y="16" text-anchor="middle" font-size="8" font-weight="600" fill="white">🦙 Ollama</text>
+
+      <g transform="translate(8, 28)">
+        <rect x="0" y="0" width="69" height="22" rx="2" fill="#f1f5f9" stroke="#cbd5e1"/>
+        <text x="34" y="10" text-anchor="middle" font-size="5" font-weight="600" fill="#475569">nomic-embed-text</text>
+        <text x="34" y="19" text-anchor="middle" font-size="5" fill="#64748b">本地 Embedding</text>
+      </g>
+
+      <g transform="translate(8, 56)">
+        <rect x="0" y="0" width="69" height="16" rx="2" fill="#f8fafc" stroke="#e2e8f0"/>
+        <text x="34" y="11" text-anchor="middle" font-size="5" fill="#64748b">:11434</text>
+      </g>
+    </g>
+
+    <g transform="translate(610, -10)">
+      <rect x="0" y="0" width="80" height="90" rx="8" fill="white" stroke="#f97316" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="80" height="22" rx="8" fill="url(#langsmithGrad)"/>
+      <rect x="0" y="14" width="80" height="8" fill="url(#langsmithGrad)"/>
+      <text x="40" y="16" text-anchor="middle" font-size="7" font-weight="600" fill="white">📊 LangSmith</text>
+
+      <g transform="translate(8, 28)">
+        <rect x="0" y="0" width="64" height="22" rx="2" fill="#fff7ed" stroke="#fed7aa"/>
+        <text x="32" y="10" text-anchor="middle" font-size="5" font-weight="600" fill="#c2410c">0.3.60</text>
+        <text x="32" y="19" text-anchor="middle" font-size="5" fill="#ea580c">TRACING</text>
+      </g>
+
+      <g transform="translate(8, 56)">
+        <rect x="0" y="0" width="64" height="16" rx="2" fill="#ffedd5" stroke="#fdba74"/>
+        <text x="32" y="11" text-anchor="middle" font-size="5" fill="#ea580c">追踪监控</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- 层间连线 -->
+  <g opacity="0.6">
+    <path d="M 205 700 L 205 725" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrowOrange)"/>
+    <path d="M 405 700 L 405 725" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrowOrange)"/>
+    <path d="M 557 700 L 557 725" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrowOrange)"/>
+  </g>
+
+  <!-- 第七层：数据存储层 (y=740) -->
+  <g transform="translate(20, 740)">
+    <rect x="0" y="0" width="105" height="28" rx="14" fill="url(#dataGrad)" filter="url(#softShadow)"/>
+    <text x="52" y="19" text-anchor="middle" font-size="11" font-weight="600" fill="white">数据存储层</text>
+
+    <g transform="translate(115, -6)">
+      <rect x="0" y="0" width="105" height="72" rx="6" fill="white" stroke="#f59e0b" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="105" height="20" rx="6" fill="#f59e0b"/>
+      <rect x="0" y="12" width="105" height="8" fill="#f59e0b"/>
+      <text x="52" y="15" text-anchor="middle" font-size="7" font-weight="600" fill="white">🗄️ SurrealDB :8000</text>
+
+      <g transform="translate(6, 26)">
+        <rect x="0" y="0" width="93" height="16" rx="2" fill="#fef3c7" stroke="#fcd34d"/>
+        <text x="46" y="11" text-anchor="middle" font-size="5" fill="#92400e">主数据库 (文档存储)</text>
+      </g>
+      <g transform="translate(6, 48)">
+        <rect x="0" y="0" width="42" height="14" rx="1" fill="#fff7ed" stroke="#fed7aa"/>
+        <text x="21" y="10" text-anchor="middle" font-size="5" fill="#c2410c">Sources</text>
+      </g>
+      <g transform="translate(57, 48)">
+        <rect x="0" y="0" width="42" height="14" rx="1" fill="#fff7ed" stroke="#fed7aa"/>
+        <text x="21" y="10" text-anchor="middle" font-size="5" fill="#c2410c">Notebooks</text>
+      </g>
+    </g>
+
+    <g transform="translate(230, -6)">
+      <rect x="0" y="0" width="105" height="72" rx="6" fill="white" stroke="#f59e0b" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="105" height="20" rx="6" fill="#d97706"/>
+      <rect x="0" y="12" width="105" height="8" fill="#d97706"/>
+      <text x="52" y="15" text-anchor="middle" font-size="7" font-weight="600" fill="white">🔍 Milvus :19530</text>
+
+      <g transform="translate(6, 26)">
+        <rect x="0" y="0" width="93" height="16" rx="2" fill="#fef3c7" stroke="#fcd34d"/>
+        <text x="46" y="11" text-anchor="middle" font-size="5" fill="#92400e">向量数据库 (v0.5.0)</text>
+      </g>
+      <g transform="translate(6, 48)">
+        <rect x="0" y="0" width="42" height="14" rx="1" fill="#fff7ed" stroke="#fed7aa"/>
+        <text x="21" y="10" text-anchor="middle" font-size="5" fill="#c2410c">Embeddings</text>
+      </g>
+      <g transform="translate(57, 48)">
+        <rect x="0" y="0" width="42" height="14" rx="1" fill="#fff7ed" stroke="#fed7aa"/>
+        <text x="21" y="10" text-anchor="middle" font-size="5" fill="#c2410c">Index</text>
+      </g>
+    </g>
+
+    <g transform="translate(345, -6)">
+      <rect x="0" y="0" width="85" height="72" rx="6" fill="white" stroke="#f59e0b" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="85" height="20" rx="6" fill="#dc2626"/>
+      <rect x="0" y="12" width="85" height="8" fill="#dc2626"/>
+      <text x="42" y="15" text-anchor="middle" font-size="7" font-weight="600" fill="white">⚡ Redis :6379</text>
+
+      <g transform="translate(6, 26)">
+        <rect x="0" y="0" width="73" height="16" rx="2" fill="#fef2f2" stroke="#fecaca"/>
+        <text x="36" y="11" text-anchor="middle" font-size="5" fill="#b91c1c">缓存层 (AOF)</text>
+      </g>
+      <g transform="translate(6, 48)">
+        <rect x="0" y="0" width="73" height="14" rx="1" fill="#fee2e2" stroke="#fca5a5"/>
+        <text x="36" y="10" text-anchor="middle" font-size="5" fill="#dc2626">Session + Queue</text>
+      </g>
+    </g>
+
+    <g transform="translate(440, -6)">
+      <rect x="0" y="0" width="85" height="72" rx="6" fill="white" stroke="#f59e0b" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="85" height="20" rx="6" fill="#be185d"/>
+      <rect x="0" y="12" width="85" height="8" fill="#be185d"/>
+      <text x="42" y="15" text-anchor="middle" font-size="7" font-weight="600" fill="white">📁 MinIO :9000</text>
+
+      <g transform="translate(6, 26)">
+        <rect x="0" y="0" width="73" height="16" rx="2" fill="#fdf2f8" stroke="#fbcfe8"/>
+        <text x="36" y="11" text-anchor="middle" font-size="5" fill="#9d174d">对象存储</text>
+      </g>
+      <g transform="translate(6, 48)">
+        <rect x="0" y="0" width="73" height="14" rx="1" fill="#fce7f3" stroke="#f9a8d4"/>
+        <text x="36" y="10" text-anchor="middle" font-size="5" fill="#be185d">文档 + 媒体</text>
+      </g>
+    </g>
+
+    <g transform="translate(535, -6)">
+      <rect x="0" y="0" width="75" height="72" rx="6" fill="white" stroke="#94a3b8" stroke-width="1" filter="url(#softShadow)"/>
+      <rect x="0" y="0" width="75" height="18" rx="6" fill="#64748b"/>
+      <rect x="0" y="10" width="75" height="8" fill="#64748b"/>
+      <text x="37" y="14" text-anchor="middle" font-size="6" font-weight="600" fill="white">📋 Etcd :2379</text>
+
+      <g transform="translate(6, 24)">
+        <rect x="0" y="0" width="63" height="16" rx="2" fill="#f1f5f9" stroke="#cbd5e1"/>
+        <text x="31" y="11" text-anchor="middle" font-size="5" fill="#475569">配置中心</text>
+      </g>
+      <g transform="translate(6, 46)">
+        <rect x="0" y="0" width="63" height="14" rx="1" fill="#f8fafc" stroke="#e2e8f0"/>
+        <text x="31" y="10" text-anchor="middle" font-size="5" fill="#64748b">服务发现</text>
+      </g>
+    </g>
+
+    <g transform="translate(620, -6)">
+      <rect x="0" y="0" width="75" height="72" rx="6" fill="white" stroke="#22c55e" stroke-width="1" stroke-dasharray="4,2" filter="url(#softShadow)"/>
+      <rect x="0" y="0" width="75" height="18" rx="6" fill="#22c55e"/>
+      <rect x="0" y="10" width="75" height="8" fill="#22c55e"/>
+      <text x="37" y="14" text-anchor="middle" font-size="6" font-weight="600" fill="white">☁️ Zitadel</text>
+
+      <g transform="translate(6, 24)">
+        <rect x="0" y="0" width="63" height="16" rx="2" fill="#dcfce7" stroke="#86efac"/>
+        <text x="31" y="11" text-anchor="middle" font-size="5" fill="#166534">Canvas Auth</text>
+      </g>
+      <g transform="translate(6, 46)">
+        <rect x="0" y="0" width="63" height="14" rx="1" fill="#f0fdf4" stroke="#bbf7d0"/>
+        <text x="31" y="10" text-anchor="middle" font-size="5" fill="#22c55e">User Store</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- 层间连线 -->
+  <g opacity="0.6">
+    <path d="M 167 806 L 167 830" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrowGray)"/>
+    <path d="M 282 806 L 282 830" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrowGray)"/>
+    <path d="M 387 806 L 387 830" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrowGray)"/>
+    <path d="M 482 806 L 482 830" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrowGray)"/>
+  </g>
+
+  <!-- 第八层：基础设施层 (y=845) -->
+  <g transform="translate(20, 845)">
+    <rect x="0" y="0" width="105" height="28" rx="14" fill="url(#infraGrad)" filter="url(#softShadow)"/>
+    <text x="52" y="19" text-anchor="middle" font-size="11" font-weight="600" fill="white">基础设施层</text>
+
+    <g transform="translate(115, -6)">
+      <rect x="0" y="0" width="360" height="70" rx="8" fill="white" stroke="#64748b" stroke-width="1.5" filter="url(#dropShadow)"/>
+      <rect x="0" y="0" width="360" height="22" rx="8" fill="#64748b"/>
+      <rect x="0" y="14" width="360" height="8" fill="#64748b"/>
+      <text x="180" y="16" text-anchor="middle" font-size="8" font-weight="600" fill="white">🐳 Docker Compose 服务编排 (13+ Services)</text>
+
+      <g transform="translate(8, 28)">
+        <rect x="0" y="0" width="46" height="16" rx="2" fill="#eff6ff" stroke="#bfdbfe"/>
+        <text x="23" y="11" text-anchor="middle" font-size="5" fill="#2563eb">notebook</text>
+      </g>
+      <g transform="translate(60, 28)">
+        <rect x="0" y="0" width="46" height="16" rx="2" fill="#fce7f3" stroke="#f9a8d4"/>
+        <text x="23" y="11" text-anchor="middle" font-size="5" fill="#9d174d">canvas</text>
+      </g>
+      <g transform="translate(112, 28)">
+        <rect x="0" y="0" width="46" height="16" rx="2" fill="#ecfeff" stroke="#a5f3fc"/>
+        <text x="23" y="11" text-anchor="middle" font-size="5" fill="#0e7490">agents</text>
+      </g>
+      <g transform="translate(164, 28)">
+        <rect x="0" y="0" width="46" height="16" rx="2" fill="#ecfeff" stroke="#a5f3fc"/>
+        <text x="23" y="11" text-anchor="middle" font-size="5" fill="#0e7490">chat-ui</text>
+      </g>
+      <g transform="translate(216, 28)">
+        <rect x="0" y="0" width="42" height="16" rx="2" fill="#fef3c7" stroke="#fcd34d"/>
+        <text x="21" y="11" text-anchor="middle" font-size="5" fill="#92400e">surreal</text>
+      </g>
+      <g transform="translate(264, 28)">
+        <rect x="0" y="0" width="42" height="16" rx="2" fill="#fef3c7" stroke="#fcd34d"/>
+        <text x="21" y="11" text-anchor="middle" font-size="5" fill="#92400e">milvus</text>
+      </g>
+      <g transform="translate(312, 28)">
+        <rect x="0" y="0" width="40" height="16" rx="2" fill="#f1f5f9" stroke="#cbd5e1"/>
+        <text x="20" y="11" text-anchor="middle" font-size="5" fill="#475569">etcd</text>
+      </g>
+
+      <g transform="translate(8, 50)">
+        <rect x="0" y="0" width="38" height="14" rx="1" fill="#fee2e2" stroke="#fca5a5"/>
+        <text x="19" y="10" text-anchor="middle" font-size="5" fill="#dc2626">redis</text>
+      </g>
+      <g transform="translate(52, 50)">
+        <rect x="0" y="0" width="38" height="14" rx="1" fill="#fdf2f8" stroke="#fbcfe8"/>
+        <text x="19" y="10" text-anchor="middle" font-size="5" fill="#be185d">minio</text>
+      </g>
+      <g transform="translate(96, 50)">
+        <rect x="0" y="0" width="38" height="14" rx="1" fill="#f8fafc" stroke="#e2e8f0"/>
+        <text x="19" y="10" text-anchor="middle" font-size="5" fill="#64748b">ollama</text>
+      </g>
+    </g>
+
+    <g transform="translate(485, -6)">
+      <rect x="0" y="0" width="105" height="70" rx="8" fill="white" stroke="#64748b" stroke-width="1" filter="url(#softShadow)"/>
+      <rect x="0" y="0" width="105" height="20" rx="8" fill="#475569"/>
+      <rect x="0" y="12" width="105" height="8" fill="#475569"/>
+      <text x="52" y="15" text-anchor="middle" font-size="7" font-weight="600" fill="white">🌐 网络配置</text>
+
+      <g transform="translate(6, 26)">
+        <rect x="0" y="0" width="93" height="16" rx="2" fill="#f1f5f9" stroke="#cbd5e1"/>
+        <text x="46" y="11" text-anchor="middle" font-size="5" fill="#475569">Bridge: chairman_network</text>
+      </g>
+      <g transform="translate(6, 48)">
+        <rect x="0" y="0" width="93" height="14" rx="1" fill="#f8fafc" stroke="#e2e8f0"/>
+        <text x="46" y="10" text-anchor="middle" font-size="5" fill="#64748b">Service Discovery</text>
+      </g>
+    </g>
+
+    <g transform="translate(600, -6)">
+      <rect x="0" y="0" width="95" height="70" rx="8" fill="white" stroke="#64748b" stroke-width="1" filter="url(#softShadow)"/>
+      <rect x="0" y="0" width="95" height="20" rx="8" fill="#475569"/>
+      <rect x="0" y="12" width="95" height="8" fill="#475569"/>
+      <text x="47" y="15" text-anchor="middle" font-size="7" font-weight="600" fill="white">💾 持久化存储</text>
+
+      <g transform="translate(6, 26)">
+        <rect x="0" y="0" width="40" height="16" rx="2" fill="#f1f5f9" stroke="#cbd5e1"/>
+        <text x="20" y="11" text-anchor="middle" font-size="5" fill="#475569">db-data</text>
+      </g>
+      <g transform="translate(50, 26)">
+        <rect x="0" y="0" width="40" height="16" rx="2" fill="#f1f5f9" stroke="#cbd5e1"/>
+        <text x="20" y="11" text-anchor="middle" font-size="5" fill="#475569">milvus</text>
+      </g>
+      <g transform="translate(6, 48)">
+        <rect x="0" y="0" width="83" height="14" rx="1" fill="#f8fafc" stroke="#e2e8f0"/>
+        <text x="41" y="10" text-anchor="middle" font-size="5" fill="#64748b">SurrealDB • MinIO</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 右侧：组件依赖关系图 + 业务流详图 -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <g transform="translate(720, 55)">
+    <rect x="0" y="0" width="1460" height="855" rx="10" fill="white" stroke="#e2e8f0" stroke-width="1.5" filter="url(#dropShadow)"/>
+    <rect x="0" y="0" width="1460" height="32" rx="10" fill="#1e293b"/>
+    <rect x="0" y="22" width="1460" height="10" fill="#1e293b"/>
+    <text x="730" y="22" text-anchor="middle" font-size="12" font-weight="600" fill="white">🏗️ 组件依赖关系 + 数据流向详图</text>
+
+    <!-- 核心组件 Open-Notebook -->
+    <g transform="translate(580, 50)">
+      <rect x="0" y="0" width="160" height="50" rx="8" fill="#3b82f6" filter="url(#dropShadow)"/>
+      <text x="80" y="22" text-anchor="middle" font-size="12" font-weight="600" fill="white">📚 Open-Notebook</text>
+      <text x="80" y="38" text-anchor="middle" font-size="9" fill="#bfdbfe">核心知识库 :8502</text>
+    </g>
+
+    <!-- OpenCanvas -->
+    <g transform="translate(100, 140)">
+      <rect x="0" y="0" width="145" height="42" rx="6" fill="#ec4899"/>
+      <text x="72" y="18" text-anchor="middle" font-size="10" font-weight="600" fill="white">🎨 OpenCanvas</text>
+      <text x="72" y="34" text-anchor="middle" font-size="8" fill="#fbcfe8">:8080 + :54367</text>
+    </g>
+
+    <!-- OpenDeepResearch -->
+    <g transform="translate(1075, 140)">
+      <rect x="0" y="0" width="145" height="42" rx="6" fill="#06b6d4"/>
+      <text x="72" y="18" text-anchor="middle" font-size="10" font-weight="600" fill="white">🔬 DeepResearch</text>
+      <text x="72" y="34" text-anchor="middle" font-size="8" fill="#a5f3fc">LangGraph Python</text>
+    </g>
+
+    <!-- Agent-Chat-UI -->
+    <g transform="translate(580, 210)">
+      <rect x="0" y="0" width="160" height="42" rx="6" fill="#8b5cf6"/>
+      <text x="80" y="18" text-anchor="middle" font-size="10" font-weight="600" fill="white">💬 Agent-Chat-UI</text>
+      <text x="80" y="34" text-anchor="middle" font-size="8" fill="#ddd6fe">:3030 通用界面</text>
+    </g>
+
+    <!-- Zitadel -->
+    <g transform="translate(100, 220)">
+      <rect x="0" y="0" width="110" height="35" rx="6" fill="#22c55e" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <text x="55" y="16" text-anchor="middle" font-size="9" font-weight="600" fill="white">🔐 Zitadel</text>
+      <text x="55" y="29" text-anchor="middle" font-size="7" fill="#bbf7d0">外部OIDC认证</text>
+    </g>
+
+    <!-- LangSmith -->
+    <g transform="translate(1110, 220)">
+      <rect x="0" y="0" width="110" height="35" rx="6" fill="#f97316" stroke="#ea580c" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <text x="55" y="16" text-anchor="middle" font-size="9" font-weight="600" fill="white">📊 LangSmith</text>
+      <text x="55" y="29" text-anchor="middle" font-size="7" fill="#fed7aa">监控追踪</text>
+    </g>
+
+    <!-- 连线：Canvas → Notebook -->
+    <path d="M 220 140 Q 450 80 600 75" stroke="#ec4899" stroke-width="2" fill="none" marker-end="url(#arrowPink)"/>
+    <rect x="360" y="88" width="60" height="16" rx="3" fill="white" stroke="#ec4899"/>
+    <text x="390" y="100" text-anchor="middle" font-size="7" fill="#be185d">搜索素材</text>
+
+    <!-- 连线：Research → Notebook -->
+    <path d="M 1100 140 Q 870 80 720 75" stroke="#06b6d4" stroke-width="2" fill="none" marker-end="url(#arrowCyan)"/>
+    <rect x="900" y="88" width="55" height="16" rx="3" fill="white" stroke="#06b6d4"/>
+    <text x="927" y="100" text-anchor="middle" font-size="7" fill="#0891b2">RAG检索</text>
+
+    <!-- 连线：Chat-UI → Canvas -->
+    <path d="M 600 210 Q 350 180 230 182" stroke="#8b5cf6" stroke-width="1.5" fill="none" marker-end="url(#arrowPurple)"/>
+    <text x="400" y="188" font-size="7" fill="#7c3aed">调用Agent</text>
+
+    <!-- 连线：Chat-UI → Research -->
+    <path d="M 720 210 Q 970 180 1090 182" stroke="#8b5cf6" stroke-width="1.5" fill="none" marker-end="url(#arrowPurple)"/>
+    <text x="900" y="188" font-size="7" fill="#7c3aed">触发研究</text>
+
+    <!-- 连线：Zitadel → Canvas -->
+    <path d="M 165 220 L 165 186" stroke="#22c55e" stroke-width="1.5" fill="none" marker-end="url(#arrowAuthGreen)"/>
+    <text x="175" y="205" font-size="7" fill="#22c55e">认证</text>
+
+    <!-- 连线：LangSmith → Research -->
+    <path d="M 1165 220 L 1165 186" stroke="#f97316" stroke-width="1.5" fill="none" marker-end="url(#arrowOrange)"/>
+    <text x="1175" y="205" font-size="7" fill="#ea580c">追踪</text>
+
+    <!-- 数据库连接 -->
+    <g transform="translate(540, 290)">
+      <rect x="0" y="0" width="200" height="35" rx="6" fill="#f59e0b"/>
+      <text x="100" y="22" text-anchor="middle" font-size="10" font-weight="600" fill="white">🗄️ 数据存储 (SurrealDB + Milvus)</text>
+    </g>
+
+    <!-- Notebook → 数据库 -->
+    <path d="M 660 100 L 660 290" stroke="#f59e0b" stroke-width="1.5" fill="none" marker-end="url(#arrowOrange)"/>
+    <text x="670" y="200" font-size="7" fill="#d97706">读写数据</text>
+
+    <!-- 部署说明 -->
+    <g transform="translate(20, 345)">
+      <text x="0" y="12" font-size="10" font-weight="600" fill="#475569">🚀 部署顺序：</text>
+      <text x="78" y="12" font-size="8" fill="#64748b">etcd/minio → milvus/redis/surreal → ollama → notebook → canvas_agents → canvas/chat-ui</text>
+
+      <text x="0" y="32" font-size="10" font-weight="600" fill="#475569">📋 一键启动：</text>
+      <rect x="78" y="18" width="135" height="18" rx="3" fill="#1e293b"/>
+      <text x="145" y="31" text-anchor="middle" font-size="9" font-family="'SF Mono', monospace" fill="#22c55e">$ docker compose up -d</text>
+    </g>
+
+    <!-- 四大业务流 -->
+    <g transform="translate(20, 390)">
+      <text x="0" y="12" font-size="10" font-weight="600" fill="#059669">🔄 四大业务流：</text>
+
+      <g transform="translate(0, 20)">
+        <rect x="0" y="0" width="155" height="24" rx="3" fill="#dbeafe" stroke="#3b82f6"/>
+        <text x="77" y="16" text-anchor="middle" font-size="7" fill="#1e40af">📚 知识库: 上传→OCR→向量→洞察</text>
+      </g>
+      <g transform="translate(165, 20)">
+        <rect x="0" y="0" width="155" height="24" rx="3" fill="#fce7f3" stroke="#ec4899"/>
+        <text x="77" y="16" text-anchor="middle" font-size="7" fill="#9d174d">🎨 创作流: 素材→编辑→AI→导出</text>
+      </g>
+      <g transform="translate(330, 20)">
+        <rect x="0" y="0" width="155" height="24" rx="3" fill="#ecfeff" stroke="#06b6d4"/>
+        <text x="77" y="16" text-anchor="middle" font-size="7" fill="#0e7490">🔬 研究流: 规划→搜索→RAG→报告</text>
+      </g>
+      <g transform="translate(495, 20)">
+        <rect x="0" y="0" width="155" height="24" rx="3" fill="#dcfce7" stroke="#22c55e"/>
+        <text x="77" y="16" text-anchor="middle" font-size="7" fill="#166534">🔐 认证流: Zitadel→JWT→Session</text>
+      </g>
+    </g>
+
+    <!-- 组件交互 -->
+    <g transform="translate(20, 460)">
+      <text x="0" y="12" font-size="10" font-weight="600" fill="#8b5cf6">🔗 组件交互：</text>
+      <g transform="translate(0, 20)">
+        <rect x="0" y="0" width="210" height="24" rx="3" fill="#f5f3ff" stroke="#8b5cf6"/>
+        <text x="105" y="16" text-anchor="middle" font-size="7" fill="#5b21b6">Canvas → Notebook: KnowledgeBaseClient</text>
+      </g>
+      <g transform="translate(220, 20)">
+        <rect x="0" y="0" width="210" height="24" rx="3" fill="#f5f3ff" stroke="#8b5cf6"/>
+        <text x="105" y="16" text-anchor="middle" font-size="7" fill="#5b21b6">Research → Notebook: 向量搜索+全文检索</text>
+      </g>
+      <g transform="translate(440, 20)">
+        <rect x="0" y="0" width="210" height="24" rx="3" fill="#fff7ed" stroke="#f97316"/>
+        <text x="105" y="16" text-anchor="middle" font-size="7" fill="#c2410c">LangSmith: LLM追踪 + 性能分析</text>
+      </g>
+    </g>
+
+    <!-- 技术栈统计 -->
+    <g transform="translate(20, 525)">
+      <rect x="0" y="0" width="1420" height="28" rx="4" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="15" y="18" font-size="9" fill="#475569">
+        <tspan font-weight="600">技术栈：</tspan>
+        <tspan fill="#64748b">Next.js 14/15 • React 18/19 • FastAPI • LangChain 0.3 • LangGraph • SurrealDB • Milvus • Redis • Docker • Zitadel • LangSmith</tspan>
+      </text>
+    </g>
+
+    <!-- 知识库流详图 -->
+    <g transform="translate(20, 570)">
+      <text x="0" y="14" font-size="10" font-weight="600" fill="#3b82f6">📚 知识库流详图</text>
+      <g transform="translate(0, 24)">
+        <rect x="0" y="0" width="68" height="35" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1"/>
+        <text x="34" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#1e40af">上传文档</text>
+        <text x="34" y="28" text-anchor="middle" font-size="6" fill="#3b82f6">PDF/URL</text>
+      </g>
+      <path d="M 72 42 L 92 42" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+      <g transform="translate(97, 24)">
+        <rect x="0" y="0" width="68" height="35" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1"/>
+        <text x="34" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#1e40af">OCR提取</text>
+        <text x="34" y="28" text-anchor="middle" font-size="6" fill="#3b82f6">PaddleOCR</text>
+      </g>
+      <path d="M 169 42 L 189 42" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+      <g transform="translate(194, 24)">
+        <rect x="0" y="0" width="68" height="35" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1"/>
+        <text x="34" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#1e40af">向量化</text>
+        <text x="34" y="28" text-anchor="middle" font-size="6" fill="#3b82f6">Milvus</text>
+      </g>
+      <path d="M 266 42 L 286 42" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+      <g transform="translate(291, 24)">
+        <rect x="0" y="0" width="68" height="35" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1"/>
+        <text x="34" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#1e40af">洞见生成</text>
+        <text x="34" y="28" text-anchor="middle" font-size="6" fill="#3b82f6">6种模板</text>
+      </g>
+      <path d="M 363 42 L 383 42" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+      <g transform="translate(388, 24)">
+        <rect x="0" y="0" width="78" height="35" rx="5" fill="#eff6ff" stroke="#3b82f6" stroke-width="1"/>
+        <text x="39" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#1e40af">InsightReader</text>
+        <text x="39" y="28" text-anchor="middle" font-size="6" fill="#3b82f6">杂志级阅读</text>
+      </g>
+    </g>
+
+    <!-- 创作流详图 -->
+    <g transform="translate(20, 645)">
+      <text x="0" y="14" font-size="10" font-weight="600" fill="#ec4899">🎨 创作流详图</text>
+      <g transform="translate(0, 24)">
+        <rect x="0" y="0" width="68" height="35" rx="5" fill="#fce7f3" stroke="#ec4899" stroke-width="1"/>
+        <text x="34" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#9d174d">选择素材</text>
+        <text x="34" y="28" text-anchor="middle" font-size="6" fill="#be185d">知识库</text>
+      </g>
+      <path d="M 72 42 L 92 42" stroke="#ec4899" stroke-width="1.5" marker-end="url(#arrowPink)"/>
+      <g transform="translate(97, 24)">
+        <rect x="0" y="0" width="68" height="35" rx="5" fill="#fce7f3" stroke="#ec4899" stroke-width="1"/>
+        <text x="34" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#9d174d">块编辑器</text>
+        <text x="34" y="28" text-anchor="middle" font-size="6" fill="#be185d">BlockNote</text>
+      </g>
+      <path d="M 169 42 L 189 42" stroke="#ec4899" stroke-width="1.5" marker-end="url(#arrowPink)"/>
+      <g transform="translate(194, 24)">
+        <rect x="0" y="0" width="68" height="35" rx="5" fill="#fce7f3" stroke="#ec4899" stroke-width="1"/>
+        <text x="34" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#9d174d">AI辅助</text>
+        <text x="34" y="28" text-anchor="middle" font-size="6" fill="#be185d">5个Agent</text>
+      </g>
+      <path d="M 266 42 L 286 42" stroke="#ec4899" stroke-width="1.5" marker-end="url(#arrowPink)"/>
+      <g transform="translate(291, 24)">
+        <rect x="0" y="0" width="68" height="35" rx="5" fill="#fce7f3" stroke="#ec4899" stroke-width="1"/>
+        <text x="34" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#9d174d">反思优化</text>
+        <text x="34" y="28" text-anchor="middle" font-size="6" fill="#be185d">Reflection</text>
+      </g>
+      <path d="M 363 42 L 383 42" stroke="#ec4899" stroke-width="1.5" marker-end="url(#arrowPink)"/>
+      <g transform="translate(388, 24)">
+        <rect x="0" y="0" width="60" height="35" rx="5" fill="#fdf2f8" stroke="#ec4899" stroke-width="1"/>
+        <text x="30" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#9d174d">导出</text>
+        <text x="30" y="28" text-anchor="middle" font-size="6" fill="#be185d">MD/PDF</text>
+      </g>
+    </g>
+
+    <!-- 研究流详图 -->
+    <g transform="translate(500, 570)">
+      <text x="0" y="14" font-size="10" font-weight="600" fill="#06b6d4">🔬 研究流详图</text>
+      <g transform="translate(0, 24)">
+        <rect x="0" y="0" width="65" height="35" rx="5" fill="#ecfeff" stroke="#06b6d4" stroke-width="1"/>
+        <text x="32" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#0e7490">研究主题</text>
+        <text x="32" y="28" text-anchor="middle" font-size="6" fill="#0891b2">用户输入</text>
+      </g>
+      <path d="M 69 42 L 84 42" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arrowCyan)"/>
+      <g transform="translate(89, 24)">
+        <rect x="0" y="0" width="60" height="35" rx="5" fill="#ecfeff" stroke="#06b6d4" stroke-width="1"/>
+        <text x="30" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#0e7490">规划</text>
+        <text x="30" y="28" text-anchor="middle" font-size="6" fill="#0891b2">Planning</text>
+      </g>
+      <path d="M 153 42 L 168 42" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arrowCyan)"/>
+      <g transform="translate(173, 24)">
+        <rect x="0" y="0" width="65" height="35" rx="5" fill="#ecfeff" stroke="#06b6d4" stroke-width="1"/>
+        <text x="32" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#0e7490">并行研究</text>
+        <text x="32" y="28" text-anchor="middle" font-size="6" fill="#0891b2">Tavily</text>
+      </g>
+      <path d="M 242 42 L 257 42" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arrowCyan)"/>
+      <g transform="translate(262, 24)">
+        <rect x="0" y="0" width="65" height="35" rx="5" fill="#ecfeff" stroke="#06b6d4" stroke-width="1"/>
+        <text x="32" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#0e7490">RAG整合</text>
+        <text x="32" y="28" text-anchor="middle" font-size="6" fill="#0891b2">知识库</text>
+      </g>
+      <path d="M 331 42 L 346 42" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arrowCyan)"/>
+      <g transform="translate(351, 24)">
+        <rect x="0" y="0" width="60" height="35" rx="5" fill="#cffafe" stroke="#06b6d4" stroke-width="1"/>
+        <text x="30" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#0e7490">报告</text>
+        <text x="30" y="28" text-anchor="middle" font-size="6" fill="#0891b2">生成</text>
+      </g>
+    </g>
+
+    <!-- 认证流详图 -->
+    <g transform="translate(500, 645)">
+      <text x="0" y="14" font-size="10" font-weight="600" fill="#22c55e">🔐 认证流详图</text>
+      <g transform="translate(0, 24)">
+        <rect x="0" y="0" width="68" height="35" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1"/>
+        <text x="34" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#166534">访问Canvas</text>
+        <text x="34" y="28" text-anchor="middle" font-size="6" fill="#22c55e">请求</text>
+      </g>
+      <path d="M 72 42 L 92 42" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arrowAuthGreen)"/>
+      <g transform="translate(97, 24)">
+        <rect x="0" y="0" width="68" height="35" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1"/>
+        <text x="34" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#166534">Zitadel</text>
+        <text x="34" y="28" text-anchor="middle" font-size="6" fill="#22c55e">OIDC登录</text>
+      </g>
+      <path d="M 169 42 L 189 42" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arrowAuthGreen)"/>
+      <g transform="translate(194, 24)">
+        <rect x="0" y="0" width="68" height="35" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1"/>
+        <text x="34" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#166534">授权回调</text>
+        <text x="34" y="28" text-anchor="middle" font-size="6" fill="#22c55e">Code→JWT</text>
+      </g>
+      <path d="M 266 42 L 286 42" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arrowAuthGreen)"/>
+      <g transform="translate(291, 24)">
+        <rect x="0" y="0" width="68" height="35" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1"/>
+        <text x="34" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#166534">NextAuth</text>
+        <text x="34" y="28" text-anchor="middle" font-size="6" fill="#22c55e">Session</text>
+      </g>
+      <path d="M 363 42 L 383 42" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arrowAuthGreen)"/>
+      <g transform="translate(388, 24)">
+        <rect x="0" y="0" width="60" height="35" rx="5" fill="#f0fdf4" stroke="#22c55e" stroke-width="1"/>
+        <text x="30" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#166534">用户</text>
+        <text x="30" y="28" text-anchor="middle" font-size="6" fill="#22c55e">Context</text>
+      </g>
+    </g>
+
+    <!-- 右侧额外信息区 -->
+    <g transform="translate(970, 570)">
+      <rect x="0" y="0" width="470" height="130" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="15" y="20" font-size="10" font-weight="600" fill="#1e293b">📌 系统亮点</text>
+
+      <g transform="translate(15, 35)">
+        <rect x="0" y="0" width="140" height="35" rx="4" fill="#dbeafe" stroke="#3b82f6"/>
+        <text x="70" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#1e40af">🎯 智能洞察</text>
+        <text x="70" y="28" text-anchor="middle" font-size="6" fill="#3b82f6">6种分析模板</text>
+      </g>
+      <g transform="translate(165, 35)">
+        <rect x="0" y="0" width="140" height="35" rx="4" fill="#fce7f3" stroke="#ec4899"/>
+        <text x="70" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#9d174d">✍️ AI创作</text>
+        <text x="70" y="28" text-anchor="middle" font-size="6" fill="#be185d">5个专业Agent</text>
+      </g>
+      <g transform="translate(315, 35)">
+        <rect x="0" y="0" width="140" height="35" rx="4" fill="#ecfeff" stroke="#06b6d4"/>
+        <text x="70" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#0e7490">🔬 深度研究</text>
+        <text x="70" y="28" text-anchor="middle" font-size="6" fill="#0891b2">多源RAG融合</text>
+      </g>
+
+      <g transform="translate(15, 80)">
+        <rect x="0" y="0" width="140" height="35" rx="4" fill="#fff7ed" stroke="#f97316"/>
+        <text x="70" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#c2410c">📊 全链追踪</text>
+        <text x="70" y="28" text-anchor="middle" font-size="6" fill="#ea580c">LangSmith监控</text>
+      </g>
+      <g transform="translate(165, 80)">
+        <rect x="0" y="0" width="140" height="35" rx="4" fill="#dcfce7" stroke="#22c55e"/>
+        <text x="70" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#166534">🔐 企业认证</text>
+        <text x="70" y="28" text-anchor="middle" font-size="6" fill="#22c55e">Zitadel OIDC</text>
+      </g>
+      <g transform="translate(315, 80)">
+        <rect x="0" y="0" width="140" height="35" rx="4" fill="#f1f5f9" stroke="#64748b"/>
+        <text x="70" y="15" text-anchor="middle" font-size="8" font-weight="600" fill="#475569">🐳 容器化</text>
+        <text x="70" y="28" text-anchor="middle" font-size="6" fill="#64748b">13+ 微服务</text>
+      </g>
+    </g>
+
+    <!-- 底部分隔线和版权 -->
+    <g transform="translate(20, 720)">
+      <rect x="0" y="0" width="1420" height="120" rx="6" fill="#fff7ed" stroke="#fed7aa"/>
+      <text x="20" y="22" font-size="10" font-weight="600" fill="#c2410c">⚡ 快速参考</text>
+
+      <g transform="translate(20, 35)">
+        <text x="0" y="12" font-size="8" font-weight="600" fill="#92400e">端口：</text>
+        <text x="35" y="12" font-size="7" fill="#b45309">8502(Notebook) | 8080(Canvas) | 3030(Chat-UI) | 5055(Backend) | 54367(Agents) | 8001(Gateway)</text>
+      </g>
+      <g transform="translate(20, 55)">
+        <text x="0" y="12" font-size="8" font-weight="600" fill="#92400e">数据库：</text>
+        <text x="50" y="12" font-size="7" fill="#b45309">SurrealDB:8000 | Milvus:19530 | Redis:6379 | MinIO:9000 | Etcd:2379</text>
+      </g>
+      <g transform="translate(20, 75)">
+        <text x="0" y="12" font-size="8" font-weight="600" fill="#92400e">外部服务：</text>
+        <text x="58" y="12" font-size="7" fill="#b45309">Zitadel(zitadel.aotsea.com) | OpenRouter(LLM) | LangSmith(Tracing) | Ollama:11434(Embedding)</text>
+      </g>
+      <g transform="translate(20, 95)">
+        <text x="0" y="12" font-size="8" font-weight="600" fill="#92400e">核心框架：</text>
+        <text x="58" y="12" font-size="7" fill="#b45309">Next.js 14/15 | React 18/19 | FastAPI | LangChain 0.3.x | LangGraph (Py 0.5.4 / TS 0.4.4) | Prisma | Pydantic</text>
+      </g>
+    </g>
+
+    <!-- 底部说明 -->
+    <g transform="translate(20, 845)">
+      <line x1="0" y1="0" x2="1420" y2="0" stroke="#e2e8f0" stroke-width="1"/>
+      <text x="0" y="12" font-size="8" fill="#94a3b8">💡 所有组件均通过 Docker Compose 统一编排，支持一键部署和弹性扩展 | 完整文档参见 docs/implementation/</text>
+    </g>
+  </g>
+
+  <!-- 图例 (底部) -->
+  <g transform="translate(20, 930)">
+    <rect x="0" y="0" width="680" height="30" rx="5" fill="white" stroke="#e2e8f0" stroke-width="1" filter="url(#softShadow)"/>
+    <text x="12" y="19" font-size="10" font-weight="600" fill="#475569">📊 图例：</text>
+    <line x1="65" y1="15" x2="95" y2="15" stroke="#3b82f6" stroke-width="2.5"/>
+    <text x="100" y="19" font-size="9" fill="#64748b">数据流</text>
+    <line x1="150" y1="15" x2="180" y2="15" stroke="#22c55e" stroke-width="2.5"/>
+    <text x="185" y="19" font-size="9" fill="#64748b">认证</text>
+    <line x1="220" y1="15" x2="250" y2="15" stroke="#8b5cf6" stroke-width="2.5"/>
+    <text x="255" y="19" font-size="9" fill="#64748b">API调用</text>
+    <line x1="300" y1="15" x2="330" y2="15" stroke="#f97316" stroke-width="2.5" stroke-dasharray="5,3"/>
+    <text x="335" y="19" font-size="9" fill="#64748b">监控</text>
+    <text x="390" y="19" font-size="9" fill="#94a3b8">|</text>
+    <text x="405" y="19" font-size="9" fill="#64748b">智董 Chairman-Agent 技术架构图 v5.2 | 2025-11-29 | 画布 2200×980</text>
+  </g>
+
+</svg>
