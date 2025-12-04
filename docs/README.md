@@ -100,6 +100,7 @@
 | [DEPLOYMENT_GUIDE.md](implementation/DEPLOYMENT_GUIDE.md) | **部署指南SSOT** - Docker Compose服务架构、环境要求（8GB内存）、基础服务部署、OCR功能部署（docker cp推荐方案）、4种部署策略对比、热更新流程、常见问题解答。 |
 | [DEVELOPMENT_PRACTICES.md](implementation/DEVELOPMENT_PRACTICES.md) | **开发实践指南SSOT** - 代码修改工作流（批量/手动）、Docker热更新最佳实践、前端/后端部署流程、版本管理策略。 |
 | [TROUBLESHOOTING.md](implementation/TROUBLESHOOTING.md) | **问题排查指南SSOT** - OCR"无可用内容"问题、Docker部署问题、API调用问题、性能优化建议。包含完整诊断命令和解决方案。 |
+| [MODEL_CONFIGURATION_GUIDE.md](implementation/MODEL_CONFIGURATION_GUIDE.md) | **模型配置指南** - LLM模型配置架构、配置优先级（数据库>环境变量>代码默认值）、Open Notebook双重配置机制、修改脚本使用说明。 |
 
 ---
 

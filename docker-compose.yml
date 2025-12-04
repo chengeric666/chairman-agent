@@ -118,16 +118,16 @@ services:
       # LLM配置
       - LLM_PROVIDER=openrouter
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - LLM_MODEL=x-ai/grok-beta
+      - LLM_MODEL=x-ai/grok-4.1-fast
 
       # Ollama 配置（用于本地 Embedding）
       - OLLAMA_BASE_URL=http://ollama:11434
 
       # 默认模型配置
-      - DEFAULT_CHAT_MODEL=x-ai/grok-beta
-      - DEFAULT_TRANSFORMATION_MODEL=x-ai/grok-beta
-      - DEFAULT_TOOLS_MODEL=x-ai/grok-beta
-      - DEFAULT_LARGE_CONTEXT_MODEL=x-ai/grok-beta
+      - DEFAULT_CHAT_MODEL=x-ai/grok-4.1-fast
+      - DEFAULT_TRANSFORMATION_MODEL=x-ai/grok-4.1-fast
+      - DEFAULT_TOOLS_MODEL=x-ai/grok-4.1-fast
+      - DEFAULT_LARGE_CONTEXT_MODEL=x-ai/grok-4.1-fast
       - DEFAULT_EMBEDDING_MODEL=nomic-embed-text
       - DEFAULT_TEXT_TO_SPEECH_MODEL=
     volumes:

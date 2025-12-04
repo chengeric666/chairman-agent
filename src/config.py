@@ -15,8 +15,8 @@ class Config:
     OPENROUTER_API_URL: str = "https://openrouter.ai/api/v1"
 
     # 模型配置
-    MODEL_REASONING: str = "x-ai/grok-4.1-fast:free"  # 用于推理和分析
-    MODEL_TOOLCALL: str = "x-ai/grok-4.1-fast:free"   # 用于工具调用
+    MODEL_REASONING: str = "x-ai/grok-4.1-fast"  # 用于推理和分析
+    MODEL_TOOLCALL: str = "x-ai/grok-4.1-fast"   # 用于工具调用
     MODEL_EMBEDDING: str = "nomic-embed-text"      # Ollama本地embedding模型（768维）
 
     # ==================== Ollama本地服务配置 ====================

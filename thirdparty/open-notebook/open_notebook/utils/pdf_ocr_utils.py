@@ -12,7 +12,7 @@ Supports:
 
 import io
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any, TYPE_CHECKING
 
 import numpy as np
 from PIL import Image
@@ -42,10 +42,11 @@ except ImportError:
 
 
 # Global OCR instance (lazy initialization)
-_ocr_engine: Optional[PaddleOCR] = None
+# Use Any type to avoid NameError when PaddleOCR is not available
+_ocr_engine: Optional[Any] = None
 
 
-def _get_ocr_engine() -> Optional[PaddleOCR]:
+def _get_ocr_engine() -> Optional[Any]:
     """Get or initialize the global PaddleOCR engine"""
     global _ocr_engine
 

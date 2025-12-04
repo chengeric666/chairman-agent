@@ -467,8 +467,8 @@ const GROQ_MODELS: ModelConfigurationParams[] = [
  */
 const OPENROUTER_MODELS: ModelConfigurationParams[] = [
   {
-    name: "openrouter/x-ai/grok-4.1-fast:free",
-    label: "Grok 4.1 Fast (Free)",
+    name: "openrouter/x-ai/grok-4.1-fast",
+    label: "Grok 4.1 Fast",
     config: {
       provider: "openrouter",
       temperatureRange: {
