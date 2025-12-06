@@ -183,11 +183,77 @@ curl -s http://localhost:5055/api/models/defaults
 docker exec chairman_open_notebook printenv | grep -E "LLM_MODEL|DEFAULT_"
 ```
 
+### Q4: OpenCanvas 报错 "No endpoints found for x-ai/grok-xxx:free"？
+
+**原因**: OpenCanvas 使用 LangGraph 持久化存储，已创建的 Assistant 配置保存在缓存文件中。即使更新了代码中的模型名，旧的 Assistant 仍使用缓存的旧配置。
+
+**缓存文件位置**:
+```
+thirdparty/open-canvas/.langgraph_api/
+├── .langgraphjs_api.checkpointer.json  ← 线程状态和 Assistant 配置
+├── .langgraphjs_api.store.json         ← 存储数据
+└── .langgraphjs_ops.json               ← 操作日志
+```
+
+**解决方案**:
+
+**方案 A: 修复缓存数据（保留历史）**
+```bash
+cd thirdparty/open-canvas/.langgraph_api
+
+# 备份
+cp .langgraphjs_api.checkpointer.json .langgraphjs_api.checkpointer.json.bak
+cp .langgraphjs_ops.json .langgraphjs_ops.json.bak
+
+# 替换错误的模型名
+sed -i '' 's/grok-4.1-fast:free/grok-4.1-fast/g' .langgraphjs_api.checkpointer.json
+sed -i '' 's/grok-4.1-fast:free/grok-4.1-fast/g' .langgraphjs_ops.json
+
+# 重启服务
+./scripts/start_opencanvas.sh restart
+```
+
+**方案 B: 清除缓存（重新开始）**
+```bash
+# 删除缓存文件（会丢失所有聊天历史）
+rm -rf thirdparty/open-canvas/.langgraph_api/*.json
+
+# 重启服务
+./scripts/start_opencanvas.sh restart
+```
+
 ---
 
-## 六、OpenRouter 模型命名规范
+## 六、OpenCanvas 特殊配置
 
-### 6.1 模型名称格式
+### 6.1 LangGraph 持久化机制
+
+OpenCanvas 使用 LangGraph 框架，具有独立的配置持久化机制：
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  models.ts      │ ──▶ │  创建 Assistant │ ──▶ │  缓存文件       │
+│  (代码默认值)    │     │  (前端操作)     │     │  (持久化存储)    │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+                                                        │
+                                                        ▼
+                                               ┌─────────────────┐
+                                               │  实际 API 调用   │
+                                               │  (使用缓存配置)  │
+                                               └─────────────────┘
+```
+
+### 6.2 注意事项
+
+- **代码更新不会影响已创建的 Assistant** - 已保存的配置优先
+- **新创建的 Assistant 使用新配置** - 或者手动修复缓存
+- **删除缓存会丢失历史** - 建议使用 sed 修复而非删除
+
+---
+
+## 七、OpenRouter 模型命名规范
+
+### 7.1 模型名称格式
 
 ```
 provider/model-name[-version]
@@ -199,7 +265,7 @@ provider/model-name[-version]
 - `anthropic/claude-3-opus` - Anthropic Claude 3 Opus
 - `openai/gpt-4-turbo` - OpenAI GPT-4 Turbo
 
-### 6.2 注意事项
+### 7.2 注意事项
 
 - **不要添加 `:free` 后缀** - 免费模型会自动路由，无需指定
 - **检查模型可用性** - OpenRouter 模型会定期更新/弃用
