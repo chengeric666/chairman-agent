@@ -149,6 +149,90 @@ dur="20s"
 
 ---
 
+## 🏷️ 品牌标识规范
+
+### Logo 尺寸
+
+TuringFlow Logo 是横向的剑鱼图标，**必须保持原始宽高比**。
+
+```tsx
+// ✅ 正确 - 保持宽高比
+<Image
+  src="/turingflow-logo.png"
+  alt="TuringFlow"
+  width={180}
+  height={40}
+  className="h-10 w-auto"
+  style={{ objectFit: 'contain' }}
+/>
+
+// ❌ 错误 - 强制正方形会导致 Logo 失真
+<div className="w-10 h-10">
+  <Image src="/turingflow-logo.png" fill />
+</div>
+```
+
+| 场景 | Logo 高度 | 宽度 | Tailwind 类 |
+|------|----------|------|------------|
+| Header/导航栏 | 40px | 自适应 | `h-10 w-auto` |
+| 侧边栏 | 40px | 自适应 | `h-10 w-auto` |
+| 侧边栏折叠 | 48px | 裁剪显示 | `h-12 w-12` (容器) |
+| 登录页 | 56px | 自适应 | `h-14 w-auto` |
+
+### Header 品牌区域
+
+```tsx
+{/* 品牌标识 - 水平布局 */}
+<div className="flex items-center gap-4">
+  {/* Logo - 保持原始宽高比 */}
+  <Image
+    src="/turingflow-logo.png"
+    alt="TuringFlow"
+    width={180}
+    height={40}
+    className="h-10 w-auto"
+    style={{ objectFit: 'contain' }}
+  />
+  {/* 产品名 + 副标题 */}
+  <div className="flex flex-col">
+    <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+      产品名称
+    </span>
+    <span className="text-xs text-slate-500">副标题/描述</span>
+  </div>
+</div>
+```
+
+### 侧边栏品牌区域
+
+```tsx
+{/* 侧边栏头部 - 垂直布局 */}
+<div className="h-24 px-4 py-3 border-b border-sidebar-border flex flex-col items-center justify-center">
+  <Image
+    src="/turingflow-logo.png"
+    alt="TuringFlow"
+    width={180}
+    height={40}
+    className="h-10 w-auto"
+    style={{ objectFit: 'contain' }}
+  />
+  <span className="text-sm font-medium text-sidebar-foreground/80 mt-2">
+    董智智能知识平台
+  </span>
+</div>
+```
+
+### 品牌间距规范
+
+| 元素间距 | 数值 | Tailwind |
+|---------|------|----------|
+| Logo 与产品名（水平） | 16px | `gap-4` |
+| Logo 与副标题（垂直） | 8px | `gap-2` 或 `mt-2` |
+| 品牌区域内边距 | 16px/12px | `px-4 py-3` |
+| 品牌区域高度（侧边栏） | 96px | `h-24` |
+
+---
+
 ## 📁 文件结构
 
 ```
@@ -223,10 +307,19 @@ cat .claude/skills/turing-ui/examples/immersive-background.tsx
 
 ## 📝 版本信息
 
-- **Version**: 1.0.0
+- **Version**: 1.1.0
 - **Created**: 2025-11-23
+- **Updated**: 2025-12-17
 - **Maintained by**: Claude (Anthropic)
 - **Design System**: TuringFlow Design System v1.0.0
+
+### 更新日志
+
+**v1.1.0 (2025-12-17)**
+- 新增「品牌标识规范」章节
+- 明确 Logo 尺寸规范（h-10 w-auto，保持宽高比）
+- 添加 Header/侧边栏品牌区域代码示例
+- 添加品牌间距规范表
 
 ---
 
